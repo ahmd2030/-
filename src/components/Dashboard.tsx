@@ -196,12 +196,19 @@ export default function Dashboard() {
       setCurrentFileName(file.name);
       
       try {
+        // Generate ID early so we can save the image regardless of AI success
+        const invoiceId = Date.now() + Math.random();
+
         // Step 1: ALWAYS convert PDF to high-res image first (for preview & local storage)
         let previewBase64: string = '';
         try {
           previewBase64 = await pdfToImage(file, 3.0, 0.8);
+          // Step 1.5: ALWAYS save preview image to IndexedDB BEFORE AI processing
+          if (previewBase64) {
+            await saveInvoiceImage(invoiceId, `data:image/jpeg;base64,${previewBase64}`);
+          }
         } catch (imgErr) {
-          console.warn("Image conversion failed for:", file.name, imgErr);
+          console.warn("Image conversion/saving failed for:", file.name, imgErr);
         }
 
         // Step 2: Extract text from PDF
@@ -222,8 +229,6 @@ export default function Dashboard() {
         const carTypeBase = (extracted.carType && extracted.carType !== '#######') ? extracted.carType : '#######';
         const branchInfo = (extracted.branch && extracted.branch !== '#######') ? extracted.branch : '';
 
-        const invoiceId = Date.now() + Math.random();
-
         const data: InvoiceData = {
           ...extracted,
           id: invoiceId,
@@ -238,15 +243,6 @@ export default function Dashboard() {
           status: 'completed',
           isFinished: false
         } as InvoiceData;
-
-        // Step 4: ALWAYS save preview image to IndexedDB
-        if (previewBase64) {
-          try {
-            await saveInvoiceImage(invoiceId, `data:image/jpeg;base64,${previewBase64}`);
-          } catch (dbErr) {
-            console.warn("Failed to save image to DB:", dbErr);
-          }
-        }
 
         setResults(prev => [...prev, data]);
       } catch (error: any) {
