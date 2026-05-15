@@ -38,18 +38,24 @@ export async function extractTextFromPdf(file: File): Promise<string> {
 }
 
 /**
- * Converts the first page of a PDF to a base64 image for better AI analysis if text extraction is poor
+ * Converts the first page of a PDF to a base64 image
+ * @param scale The resolution scale (default: 3.0 for high-res previews)
+ * @param quality The JPEG quality (default: 0.8)
  */
-export async function pdfToImage(file: File): Promise<string> {
+export async function pdfToImage(file: File, scale: number = 3.0, quality: number = 0.8): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const page = await pdf.getPage(1);
   
-  const viewport = page.getViewport({ scale: 3.0 });
+  const viewport = page.getViewport({ scale });
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d', { alpha: false });
   
   if (!context) throw new Error('Could not create canvas context');
+  
+  // Fill white background just in case
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
   
   canvas.height = viewport.height;
   canvas.width = viewport.width;
@@ -57,9 +63,8 @@ export async function pdfToImage(file: File): Promise<string> {
   await page.render({
     canvasContext: context,
     viewport: viewport,
-    // Add canvas element if required by newer versions of pdfjs
     ...( ({} as any).canvas ? { canvas: canvas } : {} )
   } as any).promise;
   
-  return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+  return canvas.toDataURL('image/jpeg', quality).split(',')[1];
 }

@@ -196,10 +196,10 @@ export default function Dashboard() {
       setCurrentFileName(file.name);
       
       try {
-        // Step 1: ALWAYS convert PDF to image first (for preview & AI fallback)
+        // Step 1: ALWAYS convert PDF to high-res image first (for preview & local storage)
         let previewBase64: string = '';
         try {
-          previewBase64 = await pdfToImage(file);
+          previewBase64 = await pdfToImage(file, 3.0, 0.8);
         } catch (imgErr) {
           console.warn("Image conversion failed for:", file.name, imgErr);
         }
@@ -207,8 +207,15 @@ export default function Dashboard() {
         // Step 2: Extract text from PDF
         const text = await extractTextFromPdf(file);
         
-        // Step 3: Use image for AI if text is too short
-        const imgForAI = text.length < 100 ? previewBase64 : undefined;
+        // Step 3: Use image for AI if needed. Generate a SMALLER image for the server payload!
+        let imgForAI: string | undefined = undefined;
+        try {
+          // Send an image if text is less than 100 chars, or just send it anyway to be safe (Gemini handles multimodal well)
+          // Scale 1.2 and quality 0.6 keeps the base64 string under Next.js 1MB/4MB limits
+          imgForAI = await pdfToImage(file, 1.2, 0.6);
+        } catch (e) {
+          console.warn("Failed to generate AI image payload", e);
+        }
 
         const extracted = await analyzeInvoiceAction(text, imgForAI, template?.headers || [], masterTemplate || undefined);
         
