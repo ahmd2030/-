@@ -1,0 +1,6 @@
+{
+  "name": "فاتورتي الذكية - Smart Invoice Analyst",
+  "description": "تطبيق لتحليل فواتير PDF واستخراج البيانات إلى ملفات Excel بدقة عالية وحفظ خصوصية البيانات.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
