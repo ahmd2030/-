@@ -1,0 +1,23 @@
+{
+  "name": "فاتورتي الذكية - Smart Invoice Analyst",
+  "short_name": "فاتورتي",
+  "description": "نظام ذكي لتحليل الفواتير واستخراج البيانات باستخدام الذكاء الاصطناعي",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF5722",
+  "icons": [
+    {
+      "src": "/invoice-icon-v4.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+       "src": "/invoice-icon-v4.svg",
+       "sizes": "512x512",
+       "type": "image/svg+xml",
+       "purpose": "maskable"
+    }
+  ]
+}
