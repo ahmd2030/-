@@ -93,18 +93,25 @@ export default function Dashboard() {
           setIsPreviewLoading(false);
         }
       } else {
+        // If file is missing (e.g. from localStorage), we can't show preview
         setPreviewImage(null);
         setIsPreviewLoading(false);
       }
     };
     
-    setEditData(selectedInvoice);
+    // Ensure we clones the invoice data to editData to avoid direct mutation
+    if (selectedInvoice) {
+      setEditData({ ...selectedInvoice });
+    } else {
+      setEditData(null);
+    }
+    
     loadPreview();
   }, [selectedInvoice]);
 
   const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const files = Array.from(e.target.files).filter(f => f.type === 'application/pdf');
+      const files = Array.from(e.target.files).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
       setPdfs(prev => [...prev, ...files]);
       e.target.value = '';
     }
@@ -126,7 +133,9 @@ export default function Dashboard() {
     if (pdfs.length === 0) return;
     isAbortedRef.current = false;
     setState(prev => ({ ...prev, total: pdfs.length, processed: 0, isProcessing: true }));
-    setResults([]);
+    
+    // Don't clear results, just append or update
+    // setResults([]); 
 
     for (const file of pdfs) {
       if (isAbortedRef.current) break;
@@ -139,17 +148,27 @@ export default function Dashboard() {
 
         const extracted = await analyzeInvoiceAction(text, imgBase64, template?.headers || [], masterTemplate || undefined);
         
+        const carTypeBase = (extracted.carType && extracted.carType !== '#######') ? extracted.carType : '#######';
+        const branchInfo = (extracted.branch && extracted.branch !== '#######') ? extracted.branch : '';
+
         const data: InvoiceData = {
           ...extracted,
           id: Date.now() + Math.random(),
           fileName: file.name,
           originalFile: file,
+          invoiceNumber: extracted.invoiceNumber || '#######',
+          date: extracted.date || '#######',
+          plateNumber: extracted.plateNumber || '#######',
+          carType: branchInfo ? `${carTypeBase} - ${branchInfo}` : carTypeBase,
+          branch: branchInfo || '#######',
+          totalAmount: extracted.totalAmount || 0,
           status: 'completed',
+          isFinished: false
         } as InvoiceData;
 
         setResults(prev => [...prev, data]);
       } catch (error: any) {
-        setResults(prev => [...prev, { fileName: file.name, status: 'error', error: error.message } as any]);
+        setResults(prev => [...prev, { fileName: file.name, status: 'error', error: error.message, id: Date.now() + Math.random() } as any]);
       } finally {
         setState(prev => ({ ...prev, processed: prev.processed + 1 }));
       }

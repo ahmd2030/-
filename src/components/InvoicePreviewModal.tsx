@@ -191,9 +191,17 @@ export default function InvoicePreviewModal({
               })}
             </div>
           ) : (
-            <div className="text-slate-300 flex flex-col items-center gap-2">
-              <AlertCircle className="w-12 h-12 opacity-30" />
-              <p className="font-bold">فشل تحميل المعاينة البصرية</p>
+            <div className="text-slate-400 flex flex-col items-center gap-4 text-center max-w-xs">
+              <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-2">
+                <AlertCircle className="w-10 h-10 opacity-20" />
+              </div>
+              <p className="font-black text-slate-600 text-lg">المعاينة غير متاحة حالياً</p>
+              <p className="text-xs font-medium leading-relaxed">لأسباب أمنية وتتعلق بالخصوصية، لا يتم حفظ ملفات الـ PDF في المتصفح. يرجى إعادة رفع الملف لمشاهدة المعاينة البصرية والتدريب.</p>
+              {!invoice.originalFile && (
+                <div className="mt-4 p-3 bg-accent/5 rounded-xl border border-accent/10 text-[10px] text-accent font-bold">
+                  سيتم حفظ كافة البيانات النصية حتى بدون وجود المعاينة.
+                </div>
+              )}
             </div>
           )}
         </div>
