@@ -1,26 +1,58 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
-  --color-primary: #475569;
-  --color-accent: #f97316;
+  --font-sans: "Tajawal", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --color-primary: #0f172a;
+  --color-secondary: #334155;
+  --color-accent: #6366f1;
+  --color-accent-hover: #4f46e5;
+  --color-surface: #ffffff;
+  --color-background: #f8fafc;
+  
+  --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 
-body {
-  @apply bg-slate-50/50 text-slate-800 antialiased;
-  direction: rtl;
+@layer base {
+  body {
+    @apply bg-background text-primary antialiased selection:bg-accent/20;
+    direction: rtl;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(225,39%,30%,0.1) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, hsla(339,49%,30%,0.1) 0, transparent 50%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
 }
 
-@utility card-brutal {
-  @apply border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md;
+@utility card-premium {
+  @apply bg-surface/90 backdrop-blur-xl border border-slate-200/50 shadow-premium transition-all duration-300 hover:shadow-2xl hover:border-accent/20 rounded-3xl;
 }
 
-@utility btn-primary {
-  @apply bg-accent text-white px-6 py-2 font-bold rounded-lg hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all;
+@utility glass-morphic {
+  @apply bg-white/40 backdrop-blur-lg border border-white/40 shadow-glass rounded-3xl;
 }
 
-@utility glass-panel {
-  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
+@utility btn-premium {
+  @apply relative overflow-hidden bg-accent text-white px-8 py-4 font-bold rounded-2xl 
+         hover:bg-accent-hover transition-all duration-300 active:scale-95 
+         shadow-lg shadow-accent/20 flex items-center justify-center gap-2;
 }
+
+@utility text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-secondary;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
+}
+
 

@@ -574,16 +574,24 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8 animate-in fade-in duration-700">
-      <header className="max-w-7xl mx-auto mb-12 text-center md:text-right">
-        <motion.h1 
-          initial={{ y: -20, opacity: 0 }}
+    <div className="min-h-screen p-4 md:p-12 transition-all duration-700">
+      <header className="max-w-7xl mx-auto mb-16 text-center">
+        <motion.div
+          initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="text-4xl md:text-6xl font-black mb-4 tracking-tighter"
+          className="inline-block"
         >
-          فاتورتي <span className="text-accent underline decoration-4 underline-offset-8">الذكية</span>
-        </motion.h1>
-        <p className="text-gray-600 text-lg">أتمتة تحليل الفواتير بدقة AI وسرية تامة.</p>
+          <div className="bg-white/30 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 mb-6 inline-flex items-center gap-2 shadow-sm">
+            <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500">نظام تحليل البيانات المتقدم</span>
+          </div>
+          <h1 className="text-5xl md:text-8xl font-black mb-6 tracking-tighter text-slate-900 leading-[1.1]">
+            فاتورتي <span className="text-gradient">الذكية</span>
+          </h1>
+          <p className="text-slate-500 text-xl font-medium max-w-2xl mx-auto leading-relaxed">
+            أتمتة تحليل الفواتير بدقة فائقة باستخدام الذكاء الاصطناعي، مصمم لرفع كفاءة أعمالك المالية.
+          </p>
+        </motion.div>
       </header>
 
       <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -627,7 +635,7 @@ export default function App() {
             <motion.section 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="card-brutal p-6 space-y-6 bg-white border-accent shadow-xl shadow-accent/5 ring-1 ring-accent/10"
+              className="card-premium p-8 space-y-6"
             >
               <div className="space-y-4 text-right">
                 <div className="bg-slate-900 p-5 rounded-2xl flex items-center gap-3 mb-2 shadow-lg">
@@ -756,7 +764,7 @@ export default function App() {
           ) : (
             <>
               {/* Upload PDFs */}
-              <section className="card-brutal p-6 space-y-4">
+              <section className="card-premium p-8 space-y-6">
             <h2 className="font-bold text-xl flex items-center gap-2">
               <FileUp className="w-5 h-5 text-accent" />
               رفع الفواتير (PDF)
@@ -809,7 +817,7 @@ export default function App() {
           </section>
 
           {/* Upload Template */}
-      <section className="card-brutal p-6 space-y-4">
+      <section className="card-premium p-8 space-y-6">
             <h2 className="font-bold text-xl flex items-center gap-2">
               <FileSpreadsheet className="w-5 h-5 text-accent" />
               ملف البيانات السابق (إضافة)
@@ -854,9 +862,9 @@ export default function App() {
                 <button 
                   onClick={state.mode === AppMode.ANALYSIS ? startProcessing : startVerification}
                   disabled={pdfs.length === 0 || (state.mode === AppMode.VERIFICATION && !template)}
-                  className="btn-primary flex-1 flex items-center justify-center gap-2 group h-14"
+                  className="btn-premium flex-1"
                 >
-                  <Play className="w-5 h-5 group-hover:translate-x-[-4px] transition-transform" />
+                  <Play className="w-5 h-5" />
                   {state.mode === AppMode.ANALYSIS ? 'ابدأ المعالجة الذكية' : 'ابدأ المطابقة والتدقيق'}
                 </button>
                 {(results.length > 0 || pdfs.length > 0) && (
@@ -894,7 +902,7 @@ export default function App() {
           </div>
 
           {/* Billing & Limits Section */}
-          <section className="card-brutal p-6 bg-accent/5 border-dashed border-accent/30 space-y-4">
+          <section className="glass-morphic p-8 border-dashed border-accent/30 space-y-4">
             <div className="flex items-center gap-2 text-accent font-bold">
               <Clock className="w-5 h-5" />
               <span>الحدود والاشتراك</span>
@@ -962,7 +970,7 @@ export default function App() {
 
           {/* Results Table */}
           <section className={cn(
-            "card-brutal flex-1 overflow-hidden flex flex-col transition-all duration-500",
+            "card-premium flex-1 overflow-hidden flex flex-col transition-all duration-500",
             state.mode === AppMode.REPORT && "shadow-2xl border-slate-200"
           )}>
             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center print:hidden">
@@ -1118,16 +1126,16 @@ export default function App() {
                 </div>
               ) : state.mode === AppMode.ANALYSIS ? (
               <table className="w-full text-right">
-                <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-100">
+                <thead className="bg-slate-50/50 backdrop-blur sticky top-0 z-10 border-b border-slate-100">
                   <tr>
-                    <th className="p-3 text-xs font-bold uppercase tracking-wider border-l border-slate-100 w-16 text-slate-500">م</th>
-                    <th className="p-3 text-xs font-bold uppercase tracking-wider border-l border-slate-100 text-slate-500">التاريخ</th>
-                    <th className="p-3 text-xs font-bold uppercase tracking-wider border-l border-slate-100 text-slate-500">رقم الفاتورة</th>
-                    <th className="p-3 text-xs font-bold uppercase tracking-wider border-l border-slate-100 text-slate-500">اللوحة</th>
-                    <th className="p-3 text-xs font-bold uppercase tracking-wider border-l border-slate-100 text-slate-500">العداد</th>
-                    <th className="p-3 text-xs font-bold uppercase tracking-wider border-l border-slate-100 text-slate-500">نوع السيارة</th>
-                    <th className="p-3 text-xs font-bold uppercase tracking-wider border-l border-slate-100 text-slate-500">الإجمالي</th>
-                    <th className="p-3 text-xs font-bold uppercase tracking-wider text-slate-500">عرض</th>
+                    <th className="p-4 text-xs font-black uppercase tracking-wider border-l border-slate-100 w-16 text-slate-400">م</th>
+                    <th className="p-4 text-xs font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">التاريخ</th>
+                    <th className="p-4 text-xs font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">رقم الفاتورة</th>
+                    <th className="p-4 text-xs font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">اللوحة</th>
+                    <th className="p-4 text-xs font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">العداد</th>
+                    <th className="p-4 text-xs font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">نوع السيارة</th>
+                    <th className="p-4 text-xs font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">الإجمالي</th>
+                    <th className="p-4 text-xs font-black uppercase tracking-wider text-slate-400">عرض</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-primary/5">
@@ -1263,7 +1271,7 @@ export default function App() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-6xl max-h-[90vh] bg-white rounded-2xl overflow-hidden card-brutal flex flex-col md:flex-row-reverse"
+              className="relative w-full max-w-6xl max-h-[90vh] bg-white rounded-[2.5rem] overflow-hidden card-premium flex flex-col md:flex-row-reverse"
             >
               {/* Sidebar Info */}
               <div className="w-full md:w-[340px] bg-white p-8 border-l border-slate-100 overflow-y-auto">
