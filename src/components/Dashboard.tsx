@@ -237,6 +237,45 @@ export default function Dashboard() {
               <p className="text-sm font-medium">اضغط لرفع ملفات الـ PDF</p>
             </div>
 
+            {/* Excel Template Integration - Moved here for better visibility */}
+            <div className="pt-4 border-t border-slate-100">
+              <h3 className="text-xs font-black text-slate-400 uppercase mb-3 flex items-center gap-1">
+                <FileSpreadsheet className="w-3.5 h-3.5 text-accent" />
+                ملف البيانات (قالب استخراج)
+              </h3>
+              <div 
+                onClick={() => templateInputRef.current?.click()}
+                className={cn(
+                  "border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all duration-300",
+                  template 
+                    ? "border-green-500 bg-green-50/50" 
+                    : "border-slate-200 hover:border-accent/40 bg-white"
+                )}
+              >
+                <input 
+                  type="file" 
+                  accept=".xlsx,.xls" 
+                  className="hidden" 
+                  ref={templateInputRef}
+                  onChange={handleTemplateUpload}
+                />
+                {template ? (
+                  <div className="flex items-center justify-center gap-3 text-green-600">
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                    <div className="text-right truncate">
+                      <div className="font-bold text-[10px] truncate max-w-[120px]">{template.name}</div>
+                      <div className="text-[9px] opacity-70">تم التوافق مع {template.headers.length} عمود</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1">
+                    <FileSpreadsheet className="w-5 h-5 text-slate-300" />
+                    <span className="text-[10px] font-bold text-slate-500">رفع إكسل لاستخراج بيانات مخصصة</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {state.isProcessing && (
               <div className="bg-slate-900 text-white p-6 rounded-2xl space-y-4 shadow-xl">
                 <div className="flex justify-between items-center">
@@ -255,13 +294,29 @@ export default function Dashboard() {
             )}
 
             {!state.isProcessing && pdfs.length > 0 && (
-              <button 
-                onClick={startProcessing}
-                className="btn-premium w-full"
-              >
-                <Play className="w-5 h-5" />
-                ابدأ المعالجة
-              </button>
+              <div className="space-y-3">
+                <button 
+                  onClick={startProcessing}
+                  className="btn-premium w-full"
+                >
+                  <Play className="w-5 h-5" />
+                  ابدأ المعالجة
+                </button>
+                <button 
+                  onClick={() => {
+                    if (confirm('هل أنت متأكد من مسح جميع الفواتير والبدء من جديد؟')) {
+                      setPdfs([]);
+                      setResults([]);
+                      setVerificationResults([]);
+                      localStorage.removeItem('invoiceResults');
+                    }
+                  }}
+                  className="w-full py-3 text-red-400 font-bold text-xs hover:text-red-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  مسح كل البيانات والبدء من جديد
+                </button>
+              </div>
             )}
           </section>
         </div>
