@@ -18,20 +18,20 @@
     @apply bg-background text-primary antialiased selection:bg-accent/20;
     direction: rtl;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-      radial-gradient(at 50% 0%, hsla(225,39%,30%,0.1) 0, transparent 50%), 
-      radial-gradient(at 100% 0%, hsla(339,49%,30%,0.1) 0, transparent 50%);
+      radial-gradient(at 0% 0%, hsla(253,16%,7%,0.03) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(225,39%,30%,0.06) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, hsla(339,49%,30%,0.05) 0, transparent 50%);
     background-attachment: fixed;
     min-height: 100vh;
   }
 }
 
 @utility card-premium {
-  @apply bg-surface/90 backdrop-blur-xl border border-slate-200/50 shadow-premium transition-all duration-300 hover:shadow-2xl hover:border-accent/20 rounded-3xl;
+  @apply bg-surface/95 backdrop-blur-xl border border-slate-200/60 shadow-premium transition-all duration-300 hover:shadow-xl rounded-2xl;
 }
 
 @utility glass-morphic {
-  @apply bg-white/40 backdrop-blur-lg border border-white/40 shadow-glass rounded-3xl;
+  @apply bg-white/40 backdrop-blur-lg border border-white/40 shadow-glass rounded-2xl;
 }
 
 @utility btn-premium {
@@ -46,7 +46,8 @@
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   @apply bg-transparent;
@@ -54,4 +55,3 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
 }
-
