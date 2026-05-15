@@ -99,35 +99,44 @@ export default function Dashboard() {
   // Preview loading
   useEffect(() => {
     const loadPreview = async () => {
-      if (selectedInvoice?.originalFile instanceof Blob) {
-        setIsPreviewLoading(true);
+      if (!selectedInvoice?.id) {
+        setPreviewImage(null);
+        setIsPreviewLoading(false);
+        return;
+      }
+
+      setIsPreviewLoading(true);
+
+      // Priority 1: Try IndexedDB (fastest, always works after processing)
+      try {
+        const savedImage = await getInvoiceImage(selectedInvoice.id);
+        if (savedImage) {
+          setPreviewImage(savedImage);
+          setIsPreviewLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.warn("IndexedDB read failed", e);
+      }
+
+      // Priority 2: Generate from original file (if still in memory)
+      if (selectedInvoice.originalFile instanceof Blob) {
         try {
           const img = await pdfToImage(selectedInvoice.originalFile);
           const base64 = `data:image/jpeg;base64,${img}`;
           setPreviewImage(base64);
-          if (selectedInvoice.id) {
-            await saveInvoiceImage(selectedInvoice.id, base64);
-          }
-        } catch (e) {
-          console.error("Preview generation failed", e);
-          setPreviewImage(null);
-        } finally {
+          // Save for next time
+          await saveInvoiceImage(selectedInvoice.id, base64);
           setIsPreviewLoading(false);
-        }
-      } else if (selectedInvoice?.id) {
-        setIsPreviewLoading(true);
-        try {
-          const savedImage = await getInvoiceImage(selectedInvoice.id);
-          setPreviewImage(savedImage || null);
+          return;
         } catch (e) {
-          setPreviewImage(null);
-        } finally {
-          setIsPreviewLoading(false);
+          console.warn("PDF render failed", e);
         }
-      } else {
-        setPreviewImage(null);
-        setIsPreviewLoading(false);
       }
+
+      // Nothing worked
+      setPreviewImage(null);
+      setIsPreviewLoading(false);
     };
     
     if (selectedInvoice) {
@@ -187,18 +196,30 @@ export default function Dashboard() {
       setCurrentFileName(file.name);
       
       try {
-        const text = await extractTextFromPdf(file);
-        let imgBase64: string | undefined = undefined;
-        if (text.length < 100) imgBase64 = await pdfToImage(file);
+        // Step 1: ALWAYS convert PDF to image first (for preview & AI fallback)
+        let previewBase64: string = '';
+        try {
+          previewBase64 = await pdfToImage(file);
+        } catch (imgErr) {
+          console.warn("Image conversion failed for:", file.name, imgErr);
+        }
 
-        const extracted = await analyzeInvoiceAction(text, imgBase64, template?.headers || [], masterTemplate || undefined);
+        // Step 2: Extract text from PDF
+        const text = await extractTextFromPdf(file);
+        
+        // Step 3: Use image for AI if text is too short
+        const imgForAI = text.length < 100 ? previewBase64 : undefined;
+
+        const extracted = await analyzeInvoiceAction(text, imgForAI, template?.headers || [], masterTemplate || undefined);
         
         const carTypeBase = (extracted.carType && extracted.carType !== '#######') ? extracted.carType : '#######';
         const branchInfo = (extracted.branch && extracted.branch !== '#######') ? extracted.branch : '';
 
+        const invoiceId = Date.now() + Math.random();
+
         const data: InvoiceData = {
           ...extracted,
-          id: Date.now() + Math.random(),
+          id: invoiceId,
           fileName: file.name,
           originalFile: file,
           invoiceNumber: extracted.invoiceNumber || '#######',
@@ -211,11 +232,14 @@ export default function Dashboard() {
           isFinished: false
         } as InvoiceData;
 
-        // Save preview image to DB
-        try {
-          const genImg = imgBase64 || await pdfToImage(file);
-          await saveInvoiceImage(data.id!, `data:image/jpeg;base64,${genImg}`);
-        } catch (e) { /* silent */ }
+        // Step 4: ALWAYS save preview image to IndexedDB
+        if (previewBase64) {
+          try {
+            await saveInvoiceImage(invoiceId, `data:image/jpeg;base64,${previewBase64}`);
+          } catch (dbErr) {
+            console.warn("Failed to save image to DB:", dbErr);
+          }
+        }
 
         setResults(prev => [...prev, data]);
       } catch (error: any) {
