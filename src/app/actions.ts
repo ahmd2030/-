@@ -72,21 +72,26 @@ export async function analyzeInvoiceAction(
     يجب أن تكون النتيجة بتنسيق JSON مطابق للمخطط الموفر.
   `;
 
-  const contents: any[] = [{ text: prompt }];
+  const parts: any[] = [{ text: prompt }];
   if (base64Image) {
-    contents.push({
+    parts.push({
       inlineData: {
         mimeType: "image/jpeg",
         data: base64Image
       }
     });
   }
-  contents.push({ text: `محتوى النص المستخرج:\n${text}` });
+  parts.push({ text: `محتوى النص المستخرج:\n${text}` });
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
-      contents: contents.map(c => typeof c === 'string' ? { text: c } : c),
+      model: "gemini-2.0-flash",
+      contents: [
+        {
+          role: "user",
+          parts: parts
+        }
+      ],
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -96,10 +101,13 @@ export async function analyzeInvoiceAction(
       },
     });
 
-    const result = JSON.parse(response.text || "{}");
+    const rawText = response.text || "{}";
+    console.log("Gemini raw response:", rawText.substring(0, 200));
+    const result = JSON.parse(rawText);
     return result;
   } catch (error: any) {
-    console.error("Gemini Server Action Error:", error);
-    throw new Error("فشل في تحليل الفاتورة عبر الخادم.");
+    console.error("Gemini Server Action Error:", error?.message || error);
+    console.error("Full error:", JSON.stringify(error, null, 2));
+    throw new Error(`فشل في تحليل الفاتورة: ${error?.message || 'خطأ غير معروف'}`);
   }
 }
