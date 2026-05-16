@@ -78,6 +78,18 @@ export default function InvoicePreviewModal({
             </div>
           </div>
 
+          {invoice.status === 'error' && invoice.error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+              <div className="flex items-center justify-end gap-2 mb-2 text-red-600">
+                <span className="font-bold text-sm">سبب فشل الذكاء الاصطناعي:</span>
+                <AlertCircle className="w-4 h-4" />
+              </div>
+              <p className="text-xs text-red-500 font-medium text-right leading-relaxed" dir="ltr">
+                {invoice.error}
+              </p>
+            </div>
+          )}
+
           <div className="space-y-6">
             {/* Field Inputs */}
             {(Object.keys(FIELD_COLORS) as Array<keyof typeof FIELD_COLORS>).map(field => (
