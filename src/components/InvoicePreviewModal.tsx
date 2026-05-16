@@ -200,45 +200,47 @@ export default function InvoicePreviewModal({
         {/* PDF Preview Area */}
         <div className="flex-1 bg-[#0f172a] overflow-hidden flex flex-col relative">
           {/* Top Control Bar */}
-          <div className="absolute top-8 left-1/2 -translate-x-1/2 z-40 bg-white/5 backdrop-blur-3xl px-10 py-4 rounded-full border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.6)] flex items-center gap-10">
+          <div className="absolute top-8 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-xl px-10 py-4 rounded-[2rem] border border-slate-700/50 shadow-[0_40px_80px_rgba(0,0,0,0.8)] flex items-center gap-10">
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setZoom(z => Math.max(0.5, z - 0.1))}
-                className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"
+                className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-all"
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-5 h-5" />
               </button>
-              <span className="text-white font-black text-xs min-w-[50px] text-center">
-                {Math.round(zoom * 100)}%
-              </span>
+              <div className="bg-slate-800 px-4 py-1.5 rounded-full">
+                <span className="text-orange-400 font-black text-xs min-w-[50px] text-center">
+                  {Math.round(zoom * 100)}%
+                </span>
+              </div>
               <button 
                 onClick={() => setZoom(z => Math.min(3, z + 0.1))}
-                className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"
+                className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-all"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="h-6 w-[1px] bg-white/10" />
+            <div className="h-8 w-[1px] bg-slate-700/50" />
 
             <button 
               onClick={() => setIsTrainingMode(!isTrainingMode)}
               className={cn(
-                "flex items-center gap-3 px-8 py-2.5 rounded-2xl text-xs font-black transition-all border-2",
+                "flex items-center gap-3 px-8 py-3 rounded-2xl text-xs font-black transition-all border-2",
                 isTrainingMode 
-                  ? "bg-white text-slate-900 border-white shadow-[0_0_40px_rgba(255,255,255,0.4)]" 
-                  : "bg-white/5 text-white border-white/20 hover:bg-white/10"
+                  ? "bg-orange-500 text-white border-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.4)]" 
+                  : "bg-slate-800 text-slate-200 border-slate-700 hover:border-orange-500/50 hover:bg-slate-700"
               )}
             >
               {isTrainingMode ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
               {isTrainingMode ? 'قفل وحفظ المواقع' : 'فتح وضع تحريك المربعات'}
             </button>
             
-            <div className="h-6 w-[1px] bg-white/10" />
+            <div className="h-8 w-[1px] bg-slate-700/50" />
             
             <button 
               onClick={onApplyLayoutToAll}
-              className="flex items-center gap-3 text-white/50 hover:text-white transition-all text-xs font-black"
+              className="flex items-center gap-3 text-slate-400 hover:text-orange-400 transition-all text-xs font-black px-4 py-2 hover:bg-white/5 rounded-xl"
             >
               <Settings2 className="w-5 h-5" />
               تطبيق الموقع على الكل
