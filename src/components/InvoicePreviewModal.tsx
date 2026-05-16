@@ -19,7 +19,10 @@ import {
   Unlock,
   Settings2,
   Expand,
-  GripHorizontal
+  GripHorizontal,
+  Plus,
+  Minus,
+  Maximize2
 } from 'lucide-react';
 import { InvoiceData, FIELD_COLORS, FIELD_NAMES } from '@/types';
 import { clsx, type ClassValue } from 'clsx';
@@ -64,6 +67,7 @@ export default function InvoicePreviewModal({
 }: InvoicePreviewModalProps) {
   
   const [isTrainingMode, setIsTrainingMode] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const [activeDragField, setActiveDragField] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -104,49 +108,46 @@ export default function InvoicePreviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-slate-900/80 backdrop-blur-xl animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-slate-950/90 backdrop-blur-2xl animate-in fade-in duration-300">
       <motion.div 
-        initial={{ scale: 0.98, opacity: 0, y: 10 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.98, opacity: 0, y: 10 }}
-        className="relative w-full max-w-[98vw] h-[98vh] bg-white rounded-[2.5rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/20 flex flex-col md:flex-row-reverse"
+        initial={{ scale: 1.02, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 1.02, opacity: 0 }}
+        className="relative w-full h-full md:max-w-[98vw] md:h-[96vh] bg-white md:rounded-[3rem] overflow-hidden shadow-[0_0_120px_rgba(0,0,0,0.6)] flex flex-col md:flex-row-reverse"
       >
         {/* Sidebar Info */}
-        <div className="w-full md:w-[420px] bg-white p-6 border-l border-slate-100 flex flex-col shadow-[-20px_0_40px_rgba(0,0,0,0.03)] z-20">
+        <div className="w-full md:w-[440px] bg-white p-8 border-l border-slate-100 flex flex-col shadow-[-30px_0_60px_rgba(0,0,0,0.04)] z-20">
           <div className="flex items-center justify-between mb-8">
             <button onClick={onClose} className="p-3 hover:bg-red-50 rounded-full transition-all group">
-              <XCircle className="w-7 h-7 text-slate-200 group-hover:text-red-500 transition-colors" />
+              <XCircle className="w-8 h-8 text-slate-200 group-hover:text-red-500 transition-colors" />
             </button>
             <div className="text-right">
               <h3 className="font-black text-2xl text-slate-900 tracking-tight">تفاصيل الفاتورة</h3>
-              <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">المراجعة والتدقيق اللحظي</p>
+              <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.25em] mt-1">المراجعة والتدقيق اللحظي</p>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-1 space-y-4 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto pr-2 space-y-5 custom-scrollbar pb-10">
             {/* Field Inputs */}
             {(Object.keys(FIELD_COLORS) as Array<keyof typeof FIELD_COLORS>).map(field => (
               <div 
                 key={field} 
                 className={cn(
-                  "space-y-1.5 p-4 rounded-[1.5rem] transition-all border-2",
+                  "space-y-1.5 p-5 rounded-[2rem] transition-all border-2",
                   hoveredField === field 
-                    ? "bg-white shadow-xl ring-4 ring-slate-100 scale-[1.02] border-slate-900" 
-                    : "bg-slate-50/50 border-transparent"
+                    ? "bg-white shadow-2xl ring-8 ring-slate-100 scale-[1.03] border-slate-900" 
+                    : "bg-slate-50 border-transparent hover:bg-slate-100/50"
                 )}
                 onMouseEnter={() => setHoveredField(field as string)}
                 onMouseLeave={() => setHoveredField(null)}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className={cn("w-3 h-3 rounded-full", FIELD_COLORS[field].border.replace('border-', 'bg-'))} />
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <span className={cn("w-4 h-4 rounded-full shadow-sm", FIELD_COLORS[field].border.replace('border-', 'bg-'))} />
+                    <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest">
                       {FIELD_NAMES[field] || field}
                     </label>
                   </div>
-                  {invoice.locations?.[field] && (
-                    <span className="text-[9px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">محدد بصرياً</span>
-                  )}
                 </div>
                 
                 <div className="relative">
@@ -155,7 +156,7 @@ export default function InvoicePreviewModal({
                       value={String(editData[field] || '')}
                       onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
                       className={cn(
-                        "w-full p-4 bg-white border-2 border-slate-100 rounded-2xl text-[13px] font-medium focus:border-slate-900 transition-all min-h-[140px] leading-relaxed shadow-inner",
+                        "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-[14px] font-medium focus:border-slate-900 transition-all min-h-[160px] leading-relaxed shadow-sm",
                         hoveredField === field && "border-slate-900"
                       )}
                       style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field].highlight : undefined }}
@@ -166,7 +167,7 @@ export default function InvoicePreviewModal({
                       value={String(editData[field] || '')}
                       onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
                       className={cn(
-                        "w-full p-4 bg-white border-2 border-slate-100 rounded-2xl text-[13px] font-black focus:border-slate-900 transition-all shadow-inner",
+                        "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-[14px] font-black focus:border-slate-900 transition-all shadow-sm",
                         hoveredField === field && "border-slate-900"
                       )}
                       style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field].highlight : undefined }}
@@ -178,78 +179,103 @@ export default function InvoicePreviewModal({
           </div>
 
           {/* Action Footer */}
-          <div className="mt-6 pt-6 border-t border-slate-100">
+          <div className="mt-8 pt-8 border-t border-slate-100 bg-white">
             <button 
               onClick={onSave}
               disabled={!hasChanges}
               className={cn(
-                "w-full py-5 rounded-[2rem] font-black text-base flex items-center justify-center gap-3 transition-all transform",
+                "w-full py-6 rounded-[2.5rem] font-black text-lg flex items-center justify-center gap-4 transition-all transform",
                 hasChanges 
-                  ? "bg-gradient-to-r from-accent to-accent-light text-white shadow-[0_15px_35px_rgba(var(--accent-rgb),0.4)] hover:scale-[1.02] active:scale-[0.98]" 
+                  ? "bg-gradient-to-r from-accent to-accent-light text-white shadow-[0_20px_40px_rgba(var(--accent-rgb),0.5)] hover:scale-[1.02] active:scale-[0.98]" 
                   : "bg-slate-100 text-slate-400 cursor-not-allowed"
               )}
             >
-              <CheckCircle2 className="w-6 h-6" />
+              <CheckCircle2 className="w-7 h-7" />
               اعتماد وحفظ البيانات النهائية
             </button>
-            <p className="text-[10px] text-center text-slate-400 mt-4 font-bold uppercase tracking-widest">سيتم تحديث سجلات الإكسل فور الحفظ</p>
+            <p className="text-[11px] text-center text-slate-400 mt-5 font-bold uppercase tracking-widest italic">سيتم تحديث سجلات الإكسل فور الحفظ</p>
           </div>
         </div>
 
         {/* PDF Preview Area */}
-        <div className="flex-1 bg-[#0f172a] overflow-hidden flex flex-col relative group">
+        <div className="flex-1 bg-[#0f172a] overflow-hidden flex flex-col relative">
           {/* Top Control Bar */}
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 bg-white/10 backdrop-blur-2xl px-8 py-3 rounded-full border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-8 transition-all hover:bg-white/20">
+          <div className="absolute top-8 left-1/2 -translate-x-1/2 z-40 bg-white/5 backdrop-blur-3xl px-10 py-4 rounded-full border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.6)] flex items-center gap-10">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setZoom(z => Math.max(0.5, z - 0.1))}
+                className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <span className="text-white font-black text-xs min-w-[50px] text-center">
+                {Math.round(zoom * 100)}%
+              </span>
+              <button 
+                onClick={() => setZoom(z => Math.min(3, z + 0.1))}
+                className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="h-6 w-[1px] bg-white/10" />
+
             <button 
               onClick={() => setIsTrainingMode(!isTrainingMode)}
               className={cn(
-                "flex items-center gap-3 px-6 py-2 rounded-xl text-xs font-black transition-all border-2",
+                "flex items-center gap-3 px-8 py-2.5 rounded-2xl text-xs font-black transition-all border-2",
                 isTrainingMode 
-                  ? "bg-white text-slate-900 border-white shadow-[0_0_30px_rgba(255,255,255,0.4)]" 
+                  ? "bg-white text-slate-900 border-white shadow-[0_0_40px_rgba(255,255,255,0.4)]" 
                   : "bg-white/5 text-white border-white/20 hover:bg-white/10"
               )}
             >
-              {isTrainingMode ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+              {isTrainingMode ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
               {isTrainingMode ? 'قفل وحفظ المواقع' : 'فتح وضع تحريك المربعات'}
             </button>
             
-            <div className="h-5 w-[1px] bg-white/20" />
+            <div className="h-6 w-[1px] bg-white/10" />
             
             <button 
               onClick={onApplyLayoutToAll}
-              className="flex items-center gap-3 text-white/70 hover:text-white transition-all text-xs font-black"
+              className="flex items-center gap-3 text-white/50 hover:text-white transition-all text-xs font-black"
             >
-              <Settings2 className="w-4 h-4" />
+              <Settings2 className="w-5 h-5" />
               تطبيق الموقع على الكل
             </button>
           </div>
 
           {/* Scrollable Container */}
           <div 
-            className="flex-1 overflow-y-auto overflow-x-auto p-12 pt-28 flex flex-col items-center bg-[#0f172a] custom-scrollbar"
+            className="flex-1 overflow-auto p-20 pt-40 flex flex-col items-center bg-[#070b14] custom-scrollbar"
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
           >
             {isPreviewLoading ? (
-              <div className="flex flex-col items-center justify-center gap-6 h-full py-40">
+              <div className="flex flex-col items-center justify-center gap-8 h-full py-60">
                 <div className="relative">
-                  <Loader2 className="w-16 h-16 text-accent animate-spin" />
-                  <div className="absolute inset-0 blur-xl bg-accent/20 animate-pulse" />
+                  <Loader2 className="w-20 h-20 text-accent animate-spin" />
+                  <div className="absolute inset-0 blur-3xl bg-accent/30 animate-pulse" />
                 </div>
-                <p className="text-white/40 font-black text-lg tracking-[0.2em] uppercase">جاري المعالجة البصرية...</p>
+                <p className="text-white/30 font-black text-xl tracking-[0.3em] uppercase">جاري القراءة البصرية المتقدمة...</p>
               </div>
             ) : previewImage ? (
               <div 
                 ref={containerRef}
-                className="relative shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] rounded-xl overflow-hidden bg-white min-w-[1000px] mb-40 border border-white/10"
+                className="relative shadow-[0_60px_120px_-30px_rgba(0,0,0,0.8)] rounded-xl overflow-visible bg-white transition-transform duration-200 origin-top"
+                style={{ 
+                  width: '900px',
+                  transform: `scale(${zoom})`,
+                  marginBottom: `${(zoom > 1 ? 40 * zoom : 40)}vh`
+                }}
               >
                 <img 
                   ref={imgRef}
                   src={previewImage} 
                   alt="Invoice Preview" 
-                  className="w-full h-auto block select-none"
-                  style={{ opacity: isTrainingMode ? 0.7 : 1 }}
+                  className="w-full h-auto block select-none rounded-xl"
+                  style={{ opacity: isTrainingMode ? 0.6 : 1 }}
                 />
                 
                 {/* Interactive Bounding Boxes */}
@@ -264,14 +290,14 @@ export default function InvoicePreviewModal({
                       className={cn(
                         "absolute border-4 transition-all z-10 flex items-center justify-center",
                         colors.border,
-                        hoveredField === field ? "opacity-100 ring-4 ring-white z-30" : "opacity-40",
+                        hoveredField === field ? "opacity-100 ring-[8px] ring-white z-30 shadow-[0_0_50px_rgba(0,0,0,0.5)]" : "opacity-50",
                         isTrainingMode ? "cursor-move border-dashed shadow-2xl" : "pointer-events-none"
                       )}
                       style={{
                         top: `${box[0] / 10}%`,
                         left: `${box[1] / 10}%`,
-                        height: `${Math.max(30, (box[2] - box[0])) / 10}%`, // Min height for visibility
-                        width: `${Math.max(50, (box[3] - box[1])) / 10}%`,  // Min width for visibility
+                        height: `${Math.max(40, (box[2] - box[0])) / 10}%`,
+                        width: `${Math.max(80, (box[3] - box[1])) / 10}%`,
                         backgroundColor: colors.highlight
                       }}
                       onMouseDown={(e) => handleMouseDown(e, field)}
@@ -279,13 +305,13 @@ export default function InvoicePreviewModal({
                       onMouseLeave={() => !activeDragField && setHoveredField(null)}
                     >
                       {isTrainingMode && (
-                        <div className="absolute inset-0 flex items-center justify-center opacity-30">
-                          <GripHorizontal className="w-6 h-6 text-slate-900" />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-40">
+                          <GripHorizontal className="w-10 h-10 text-slate-900" />
                         </div>
                       )}
                       
                       {isTrainingMode && hoveredField === field && (
-                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-4 py-1.5 rounded-full font-black whitespace-nowrap shadow-2xl z-40 border border-white/20">
+                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[12px] px-6 py-2.5 rounded-full font-black whitespace-nowrap shadow-[0_10px_30px_rgba(0,0,0,0.5)] z-40 border-2 border-white/20 uppercase tracking-widest">
                           {FIELD_NAMES[field] || field}
                         </div>
                       )}
@@ -294,26 +320,29 @@ export default function InvoicePreviewModal({
                 })}
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-white/20 gap-8 text-center max-w-md mx-auto py-40">
-                <div className="w-32 h-32 bg-white/5 rounded-[3rem] flex items-center justify-center rotate-6 border border-white/10">
-                  <AlertCircle className="w-16 h-16 opacity-10" />
+              <div className="flex-1 flex flex-col items-center justify-center text-white/10 gap-10 text-center max-w-xl mx-auto py-60">
+                <div className="w-40 h-40 bg-white/5 rounded-[4rem] flex items-center justify-center rotate-12 border border-white/10">
+                  <AlertCircle className="w-20 h-20 opacity-10" />
                 </div>
-                <div className="space-y-4">
-                  <p className="font-black text-white text-2xl tracking-tight">المعاينة غير متاحة حالياً</p>
-                  <p className="text-sm font-bold leading-relaxed text-white/40">يرجى إعادة رفع الملف لمشاهدة المعاينة البصرية والبدء في التدريب اليدوي.</p>
+                <div className="space-y-5">
+                  <p className="font-black text-white text-3xl tracking-tight">المعاينة البصرية مقفلة</p>
+                  <p className="text-base font-bold leading-relaxed text-white/30">يرجى إعادة رفع الفاتورة لتفعيل المعاينة والبدء في وضع التدريب التفاعلي للمربعات.</p>
                 </div>
               </div>
             )}
           </div>
           
-          {/* Bottom Zoom Info */}
-          <div className="absolute bottom-8 left-8 flex items-center gap-4 bg-white/10 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/10 shadow-2xl text-[11px] font-black text-white/60 uppercase tracking-[0.3em]">
-            <Expand className="w-4 h-4" />
-            وضع المعاينة الفائقة
+          {/* Bottom Controls Info */}
+          <div className="absolute bottom-10 left-10 flex items-center gap-6 bg-white/5 backdrop-blur-2xl px-8 py-4 rounded-[2rem] border border-white/10 shadow-2xl">
+            <div className="flex items-center gap-3 text-[12px] font-black text-white/40 uppercase tracking-[0.4em]">
+              <Maximize2 className="w-5 h-5" />
+              التحكم الكامل بالمعاينة
+            </div>
+            <div className="h-4 w-[1px] bg-white/10" />
+            <button onClick={() => setZoom(1)} className="text-[10px] font-black text-accent hover:text-white transition-colors">إعادة الضبط</button>
           </div>
         </div>
       </motion.div>
     </div>
   );
 }
-
