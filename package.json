@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.3.0",
+    "@google/generative-ai": "^0.24.1",
     "clsx": "^2.1.1",
     "idb": "^8.0.3",
     "lucide-react": "^1.16.0",
