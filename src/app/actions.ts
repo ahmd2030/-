@@ -87,7 +87,7 @@ export async function analyzeInvoiceAction(
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-8b",
       contents: [
         {
           role: "user",
