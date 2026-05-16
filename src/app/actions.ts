@@ -43,7 +43,8 @@ export async function analyzeInvoiceAction(
   text: string, 
   base64Image?: string,
   extraFields: string[] = [],
-  hintLocations?: Record<string, number[]>
+  hintLocations?: Record<string, number[]>,
+  knowledge?: Record<string, string[]> // Past corrections
 ): Promise<Partial<InvoiceData> & { error?: string }> {
   
   const dynamicProps: any = { ...INVOICE_SCHEMA.properties };
@@ -58,10 +59,16 @@ export async function analyzeInvoiceAction(
     ${Object.entries(hintLocations).map(([field, box]) => `- ${field}: [${box.join(', ')}]`).join('\n')}
     ` : '';
 
+  const knowledgeSnippet = knowledge ? `
+    ذاكرة التعلم من المستخدم (تصحيحات سابقة): لقد قام المستخدم سابقاً بتصحيح قيم معينة، تعلم منها لتجنب تكرار الخطأ:
+    ${Object.entries(knowledge).map(([field, examples]) => `- للحقل "${field}": يفضل المستخدم قيماً مثل [${examples.slice(-5).join(', ')}]`).join('\n')}
+    ` : '';
+
   const prompt = `
     أنت محلل مالي دقيق جداً وخبير في تحديد المواقع البصرية. قم باستخراج البيانات من هذه الفاتورة المرفقة.
     
     ${hintSnippet}
+    ${knowledgeSnippet}
 
     قواعد التصنيف الهامة:
     1. حقل "branch" (الفرع/المنطقة): هذا الحقل يجب أن يستخرج حصراً من سطر وصف السيارة إذا وجد فاصل (/) أو من خانة الموقع داخل الجدول.

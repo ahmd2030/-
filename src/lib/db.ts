@@ -7,16 +7,40 @@ import { openDB, IDBPDatabase } from 'idb';
 
 const DB_NAME = 'SmartInvoiceDB';
 const STORE_NAME = 'invoice_images';
-const DB_VERSION = 1;
+const KNOWLEDGE_STORE = 'knowledge';
+const DB_VERSION = 2;
 
 export async function getDB(): Promise<IDBPDatabase> {
   return openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME);
       }
+      if (!db.objectStoreNames.contains(KNOWLEDGE_STORE)) {
+        db.createObjectStore(KNOWLEDGE_STORE);
+      }
     },
   });
+}
+
+export async function saveKnowledge(key: string, value: any): Promise<void> {
+  const db = await getDB();
+  await db.put(KNOWLEDGE_STORE, value, key);
+}
+
+export async function getKnowledge(key: string): Promise<any | null> {
+  const db = await getDB();
+  return (await db.get(KNOWLEDGE_STORE, key)) || null;
+}
+
+export async function getAllKnowledge(): Promise<Record<string, any>> {
+  const db = await getDB();
+  const keys = await db.getAllKeys(KNOWLEDGE_STORE);
+  const result: Record<string, any> = {};
+  for (const key of keys) {
+    result[String(key)] = await db.get(KNOWLEDGE_STORE, key);
+  }
+  return result;
 }
 
 export async function saveInvoiceImage(id: string | number, base64: string): Promise<void> {

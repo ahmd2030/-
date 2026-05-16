@@ -19,7 +19,13 @@ import { InvoiceData, ProcessingState, ExcelTemplate, AppMode, VerificationResul
 import { extractTextFromPdf, pdfToImage } from '@/lib/pdf';
 import { analyzeInvoiceAction } from '@/app/actions';
 import { readExcelTemplate, exportToExcel } from '@/lib/excel';
-import { saveInvoiceImage, getInvoiceImage, clearAllImages } from '@/lib/db';
+import { 
+  saveInvoiceImage, 
+  getInvoiceImage, 
+  clearAllImages, 
+  saveKnowledge, 
+  getAllKnowledge 
+} from '@/lib/db';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import InvoiceTable from '@/components/InvoiceTable';
@@ -208,6 +214,9 @@ export default function Dashboard() {
     isAbortedRef.current = false;
     setState(prev => ({ ...prev, total: pdfs.length, processed: 0, isProcessing: true, mode: AppMode.ANALYSIS }));
 
+    // Load past knowledge for AI learning
+    const knowledge = await getAllKnowledge();
+
     for (const file of pdfs) {
       if (isAbortedRef.current) break;
       setCurrentFileName(file.name);
@@ -241,7 +250,7 @@ export default function Dashboard() {
           console.warn("Failed to generate AI image payload", e);
         }
 
-        const extracted = await analyzeInvoiceAction(text, imgForAI, template?.headers || [], masterTemplate || undefined);
+        const extracted = await analyzeInvoiceAction(text, imgForAI, template?.headers || [], masterTemplate || undefined, knowledge);
         
         // If the server action returned an error property, throw it here
         if (extracted.error) {
@@ -310,8 +319,23 @@ export default function Dashboard() {
     exportToExcel(results, template || undefined);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editData || !selectedInvoice) return;
+    
+    // LEARNING SYSTEM: Detect changes and save them
+    const fieldsToLearn = ['branch', 'carType', 'itemsDescription'];
+    for (const field of fieldsToLearn) {
+      const oldVal = (selectedInvoice as any)[field];
+      const newVal = (editData as any)[field];
+      if (newVal && newVal !== oldVal && newVal !== '#######') {
+        const existing = await getAllKnowledge();
+        const examples = existing[field] || [];
+        if (!examples.includes(newVal)) {
+          await saveKnowledge(field, [...examples, newVal].slice(-20)); // Keep last 20 examples
+        }
+      }
+    }
+
     const updatedData = { ...selectedInvoice, ...editData, isFinished: true };
     setResults(prev => prev.map(item => 
       item.id === selectedInvoice.id ? { ...item, ...updatedData } : item
