@@ -348,18 +348,18 @@ export default function Dashboard() {
         <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8 }}>
           <div className="flex justify-center mb-6">
             <div className="relative group">
-              <div className="absolute inset-0 bg-accent/20 blur-3xl rounded-full animate-pulse group-hover:bg-accent/40 transition-all" />
-              <img src="/logo.png" alt="Smart Invoice Logo" className="relative w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-2xl" />
+              <div className="absolute inset-0 bg-orange-500/10 blur-3xl rounded-full transition-all" />
+              <img src="/logo.png" alt="Smart Invoice Logo" className="relative w-24 h-24 md:w-32 md:h-32 object-contain" />
             </div>
           </div>
           
-          <div className="bg-slate-900/5 backdrop-blur-md px-6 py-2 rounded-full border border-slate-200/50 mb-6 inline-flex items-center gap-3 shadow-sm">
-            <span className="w-2.5 h-2.5 bg-accent rounded-full animate-pulse shadow-[0_0_10px_rgba(var(--accent-rgb),0.8)]" />
-            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500">نظام تحليل البيانات الذكي</span>
+          <div className="bg-orange-500/5 backdrop-blur-md px-6 py-2 rounded-full border border-orange-200/50 mb-6 inline-flex items-center gap-3 shadow-sm">
+            <span className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.4)]" />
+            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-orange-600/70">نظام تحليل البيانات الذكي</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter text-slate-900 leading-[1] drop-shadow-sm">
-            فاتورتي <span className="text-gradient">الذكية</span>
+            فاتورتي <span className="text-orange-500">الذكية</span>
           </h1>
           
           <p className="text-slate-500 text-lg font-medium max-w-2xl mx-auto leading-relaxed">

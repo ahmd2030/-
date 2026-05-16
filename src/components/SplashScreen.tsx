@@ -44,17 +44,17 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
                 initial={{ width: 0 }}
                 animate={{ width: 'auto' }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
-                className="inline-block whitespace-nowrap overflow-hidden"
+                className="inline-block whitespace-nowrap overflow-hidden text-orange-500"
               >
                 فاتورتي
               </motion.span>
-              <span className="text-accent">.</span>
+              <span className="text-white">.</span>
             </h1>
             <motion.div 
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="h-1 bg-gradient-to-r from-transparent via-accent to-transparent mt-4 w-full origin-center"
+              className="h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent mt-4 w-full origin-center"
             />
           </motion.div>
         )}
@@ -69,29 +69,27 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
             className="flex flex-col items-center gap-6"
           >
             <div className="relative w-32 h-32 md:w-48 md:h-48">
-              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(var(--accent-rgb),0.5)]" />
-              <motion.div 
-                animate={{ rotate: 360 }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-[-20%] border-2 border-dashed border-accent/20 rounded-full"
-              />
+              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
-            <motion.p 
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-white/40 font-black text-[10px] uppercase tracking-[0.4em]"
+              className="text-center"
             >
-              Smart Invoice Analyst
-            </motion.p>
+              <h2 className="text-3xl font-black text-white mb-2">فاتورتي الذكية</h2>
+              <p className="text-orange-500/60 font-black text-[10px] uppercase tracking-[0.4em]">
+                Smart Invoice Analyst
+              </p>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Decorative Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/30 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/20 blur-[120px] rounded-full" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-500/20 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/10 blur-[120px] rounded-full" />
       </div>
     </div>
   );
