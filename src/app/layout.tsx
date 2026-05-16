@@ -11,6 +11,11 @@ const tajawal = Tajawal({
 export const metadata: Metadata = {
   title: "فاتورتي الذكية | Smart Invoice Analyst",
   description: "محلل فواتير احترافي مدعوم بالذكاء الاصطناعي لاستخراج البيانات بدقة متناهية.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
+  themeColor: "#f97316",
 };
 
 export default function RootLayout({

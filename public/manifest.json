@@ -1,0 +1,17 @@
+{
+  "name": "فاتورتي الذكية",
+  "short_name": "فاتورتي",
+  "description": "محلل فواتير احترافي مدعوم بالذكاء الاصطناعي",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

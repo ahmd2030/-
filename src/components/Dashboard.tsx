@@ -346,24 +346,30 @@ export default function Dashboard() {
       {/* Header */}
       <header className="max-w-7xl mx-auto mb-12 text-center">
         <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8 }}>
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-10">
             <div className="relative group">
-              <div className="absolute inset-0 bg-orange-500/10 blur-3xl rounded-full transition-all" />
-              <img src="/logo.png" alt="Smart Invoice Logo" className="relative w-24 h-24 md:w-32 md:h-32 object-contain" />
+              <div className="absolute inset-0 bg-orange-500/5 blur-[100px] rounded-full" />
+              <motion.img 
+                whileHover={{ scale: 1.05, rotate: 5 }}
+                src="/logo.png" 
+                alt="Smart Invoice Logo" 
+                className="relative w-28 h-28 md:w-36 md:h-36 object-contain drop-shadow-xl" 
+              />
             </div>
           </div>
           
-          <div className="bg-orange-500/5 backdrop-blur-md px-6 py-2 rounded-full border border-orange-200/50 mb-6 inline-flex items-center gap-3 shadow-sm">
-            <span className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.4)]" />
-            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-orange-600/70">نظام تحليل البيانات الذكي</span>
+          <div className="bg-white/40 backdrop-blur-md px-8 py-2.5 rounded-full border border-slate-200/50 mb-8 inline-flex items-center gap-4 shadow-sm">
+            <span className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse" />
+            <span className="text-[12px] font-black uppercase tracking-[0.4em] text-slate-400">نظام تحليل البيانات الذكي</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter text-slate-900 leading-[1] drop-shadow-sm">
-            فاتورتي <span className="text-orange-500">الذكية</span>
+          <h1 className="text-6xl md:text-8xl font-black mb-8 tracking-tighter text-slate-900 leading-[1] drop-shadow-sm flex flex-col md:flex-row items-center justify-center gap-4">
+            <span>فاتورتي</span>
+            <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent pb-2">الذكية</span>
           </h1>
           
-          <p className="text-slate-500 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
-            المساعد الذكي للأرشفة والتحليل المالي المدعوم بـ <span className="text-slate-900 font-bold">Gemini 2.5</span>
+          <p className="text-slate-400 text-xl font-bold max-w-2xl mx-auto leading-relaxed">
+            المساعد الذكي للأرشفة والتحليل المالي المدعوم بـ <span className="text-slate-900">Gemini 2.5</span>
           </p>
         </motion.div>
       </header>
