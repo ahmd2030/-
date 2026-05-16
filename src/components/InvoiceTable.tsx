@@ -169,11 +169,11 @@ export default function InvoiceTable({
                     transition={{ delay: idx * 0.02 }}
                     key={res.id || idx} 
                     className={cn(
-                      "hover:bg-accent/5 transition-colors cursor-pointer group",
-                      openedIds.includes(res.id!) && "bg-green-50/60",
-                      lastWorkedOnId === res.id && "bg-orange-100/20 border-r-4 border-orange-400",
-                      res.status === 'error' && "bg-red-50/40",
-                      selectedInvoice?.id === res.id && "bg-accent/5 ring-1 ring-inset ring-accent/20"
+                      "hover:bg-slate-50 transition-all cursor-pointer group border-r-4",
+                      openedIds.includes(res.id!) ? "bg-green-50/80 border-green-500/30" : "border-transparent",
+                      lastWorkedOnId === res.id && "bg-orange-100 border-orange-500 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.1)]",
+                      res.status === 'error' && "bg-red-50",
+                      selectedInvoice?.id === res.id && "bg-slate-100 ring-1 ring-inset ring-slate-200 z-10"
                     )}
                     onClick={() => onSelect(res)}
                   >
@@ -189,6 +189,12 @@ export default function InvoiceTable({
                           {res.isFinished && <CheckCircle2 className="w-3 h-3" />}
                         </button>
                         <span className="text-xs font-bold text-slate-400">{idx + 1}</span>
+                        {lastWorkedOnId === res.id && (
+                          <span className="bg-orange-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse whitespace-nowrap">آخر عمل</span>
+                        )}
+                        {openedIds.includes(res.id!) && lastWorkedOnId !== res.id && (
+                          <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap">تم فتحها</span>
+                        )}
                       </div>
                     </td>
                     <td className="p-3 text-xs font-medium text-slate-600 whitespace-nowrap">{res.date}</td>
