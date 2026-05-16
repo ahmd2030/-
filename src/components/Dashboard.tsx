@@ -195,10 +195,10 @@ export default function Dashboard() {
       if (isAbortedRef.current) break;
       setCurrentFileName(file.name);
       
+      // Generate ID early so we can save the image regardless of AI success
+      const invoiceId = Date.now() + Math.random();
+      
       try {
-        // Generate ID early so we can save the image regardless of AI success
-        const invoiceId = Date.now() + Math.random();
-
         // Step 1: ALWAYS convert PDF to high-res image first (for preview & local storage)
         let previewBase64: string = '';
         try {
@@ -261,7 +261,7 @@ export default function Dashboard() {
           notes: '',
           status: 'error', 
           error: error.message, 
-          id: Date.now() + Math.random() 
+          id: invoiceId 
         } as any]);
       } finally {
         setState(prev => ({ ...prev, processed: prev.processed + 1 }));
