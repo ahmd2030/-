@@ -23,6 +23,8 @@ interface InvoiceTableProps {
   results: InvoiceData[];
   verificationResults: VerificationResult[];
   selectedInvoice: InvoiceData | null;
+  openedIds: (string | number)[];
+  lastWorkedOnId: string | number | null;
   onSelect: (invoice: InvoiceData) => void;
   onToggleComplete: (id: string | number) => void;
   onDelete: (id: string | number) => void;
@@ -34,6 +36,8 @@ export default function InvoiceTable({
   results, 
   verificationResults, 
   selectedInvoice,
+  openedIds,
+  lastWorkedOnId,
   onSelect,
   onToggleComplete,
   onDelete,
@@ -166,7 +170,8 @@ export default function InvoiceTable({
                     key={res.id || idx} 
                     className={cn(
                       "hover:bg-accent/5 transition-colors cursor-pointer group",
-                      res.isFinished && "bg-green-50/40",
+                      openedIds.includes(res.id!) && "bg-green-50/60",
+                      lastWorkedOnId === res.id && "bg-orange-100/20 border-r-4 border-orange-400",
                       res.status === 'error' && "bg-red-50/40",
                       selectedInvoice?.id === res.id && "bg-accent/5 ring-1 ring-inset ring-accent/20"
                     )}

@@ -46,6 +46,9 @@ export default function Dashboard() {
   const [trainedLayouts, setTrainedLayouts] = useState<Record<string, Record<string, number[]>>>({});
   const [masterTemplate, setMasterTemplate] = useState<Record<string, number[]> | null>(null);
 
+  const [openedIds, setOpenedIds] = useState<Set<string | number>>(new Set());
+  const [lastWorkedOnId, setLastWorkedOnId] = useState<string | number | null>(null);
+
   const [state, setState] = useState<ProcessingState>({
     total: 0,
     processed: 0,
@@ -66,10 +69,15 @@ export default function Dashboard() {
         const savedTrained = localStorage.getItem('trainedLayouts');
         const savedMaster = localStorage.getItem('masterTemplate');
         const savedResults = localStorage.getItem('invoiceResults');
+        const savedOpened = localStorage.getItem('openedInvoiceIds');
+        const savedLast = localStorage.getItem('lastWorkedOnId');
 
         if (savedLocks) setLockedLayouts(JSON.parse(savedLocks));
         if (savedTrained) setTrainedLayouts(JSON.parse(savedTrained));
         if (savedMaster) setMasterTemplate(JSON.parse(savedMaster));
+        if (savedOpened) setOpenedIds(new Set(JSON.parse(savedOpened)));
+        if (savedLast) setLastWorkedOnId(savedLast);
+
         if (savedResults) {
           const parsed = JSON.parse(savedResults);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -92,9 +100,11 @@ export default function Dashboard() {
       localStorage.setItem('lockedLayouts', JSON.stringify(lockedLayouts));
       localStorage.setItem('trainedLayouts', JSON.stringify(trainedLayouts));
       localStorage.setItem('masterTemplate', JSON.stringify(masterTemplate));
+      localStorage.setItem('openedInvoiceIds', JSON.stringify(Array.from(openedIds)));
+      if (lastWorkedOnId) localStorage.setItem('lastWorkedOnId', String(lastWorkedOnId));
       if (results.length > 0) localStorage.setItem('invoiceResults', JSON.stringify(results));
     }
-  }, [lockedLayouts, trainedLayouts, masterTemplate, results]);
+  }, [lockedLayouts, trainedLayouts, masterTemplate, results, openedIds, lastWorkedOnId]);
 
   // Preview loading
   useEffect(() => {
@@ -104,6 +114,9 @@ export default function Dashboard() {
         setIsPreviewLoading(false);
         return;
       }
+
+      // Mark as opened
+      setOpenedIds(prev => new Set(prev).add(selectedInvoice.id!));
 
       setIsPreviewLoading(true);
 
@@ -142,6 +155,10 @@ export default function Dashboard() {
     if (selectedInvoice) {
       setEditData({ ...selectedInvoice });
     } else {
+      // When closing, if we had an edit data, mark it as last worked on
+      if (editData?.id) {
+        setLastWorkedOnId(editData.id);
+      }
       setEditData(null);
     }
     loadPreview();
@@ -576,6 +593,8 @@ export default function Dashboard() {
               results={results}
               verificationResults={verificationResults}
               selectedInvoice={selectedInvoice}
+              openedIds={Array.from(openedIds)}
+              lastWorkedOnId={lastWorkedOnId}
               onSelect={setSelectedInvoice}
               onToggleComplete={(id) => setResults(prev => prev.map(r => r.id === id ? { ...r, isFinished: !r.isFinished } : r))}
               onDelete={(id) => setResults(prev => prev.filter(r => r.id !== id))}
