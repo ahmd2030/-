@@ -55,7 +55,16 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
       else if (h === 'العدد' || h.includes('count') || h.includes('عداد')) row[h] = item.count || '';
       else if (h === 'نوع السيارة' || h.includes('car')) row[h] = item.carType || placeholder;
       else if (h === 'الفرع' || h.includes('branch')) row[h] = item.branch || placeholder;
-      else if (h === 'إسم الأصناف' || h.includes('item')) row[h] = item.itemsDescription || placeholder;
+      else if (h === 'إسم الأصناف' || h.includes('item')) {
+        const raw = item.itemsDescription || placeholder;
+        // Clean up and ensure 1-, 2-, 3- format if it's a list
+        const lines = raw.split('\n').filter(l => l.trim() !== '');
+        const formatted = lines.map((line, i) => {
+          const clean = line.replace(/^\d+[-.)\s]*/, '').trim();
+          return `${i + 1}- ${clean}`;
+        }).join('\n');
+        row[h] = formatted || placeholder;
+      }
       else if (h === 'الإجمالي' || h === 'subtotal') row[h] = item.subTotal || placeholder;
       else if (h === 'الضريبة' || h.includes('tax')) row[h] = item.taxAmount || placeholder;
       else if (h === 'الاجمالي بعد الضريبة' || h === 'total') row[h] = item.totalAmount || placeholder;

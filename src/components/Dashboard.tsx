@@ -297,6 +297,23 @@ export default function Dashboard() {
     setLockedLayouts(prev => ({ ...prev, [selectedInvoice.fileName]: true }));
   };
 
+  const handleApplyLayoutToAll = () => {
+    if (!selectedInvoice || !selectedInvoice.locations) return;
+    const master = selectedInvoice.locations;
+    setMasterTemplate(master);
+    setResults(prev => prev.map(res => ({
+      ...res,
+      locations: { ...res.locations, ...master }
+    })));
+    // Also lock all of them to this template
+    const newLocks: Record<string, boolean> = {};
+    results.forEach(res => {
+      newLocks[res.fileName] = true;
+    });
+    setLockedLayouts(prev => ({ ...prev, ...newLocks }));
+    alert('تم تطبيق تنسيق المواقع على جميع الفواتير المحملة بنجاح!');
+  };
+
   const handleClearAll = async () => {
     if (confirm('هل أنت متأكد من مسح جميع الفواتير والبدء من جديد؟')) {
       setPdfs([]);
@@ -575,6 +592,7 @@ export default function Dashboard() {
             onSave={handleSaveEdit}
             onUpdateLocation={(f, b) => setSelectedInvoice({ ...selectedInvoice, locations: { ...selectedInvoice.locations, [f]: b } })}
             onSaveLayout={handleSaveLayout}
+            onApplyLayoutToAll={handleApplyLayoutToAll}
             setHoveredField={setHoveredField}
           />
         )}
