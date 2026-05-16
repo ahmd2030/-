@@ -156,7 +156,7 @@ export default function InvoicePreviewModal({
                       value={String(editData[field] || '')}
                       onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
                       className={cn(
-                        "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-[14px] font-medium focus:border-slate-900 transition-all min-h-[160px] leading-relaxed shadow-sm",
+                        "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-lg font-black focus:border-slate-900 transition-all min-h-[160px] leading-relaxed shadow-sm",
                         hoveredField === field && "border-slate-900"
                       )}
                       style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field].highlight : undefined }}
@@ -167,7 +167,7 @@ export default function InvoicePreviewModal({
                       value={String(editData[field] || '')}
                       onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
                       className={cn(
-                        "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-[14px] font-black focus:border-slate-900 transition-all shadow-sm",
+                        "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-xl font-black focus:border-slate-900 transition-all shadow-sm",
                         hoveredField === field && "border-slate-900"
                       )}
                       style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field].highlight : undefined }}
