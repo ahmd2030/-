@@ -4,13 +4,13 @@
   --font-sans: var(--font-tajawal), ui-sans-serif, system-ui, sans-serif;
   --color-primary: #0f172a;
   --color-secondary: #334155;
-  --color-accent: #6366f1;
-  --color-accent-hover: #4f46e5;
+  --color-accent: #f97316;
+  --color-accent-hover: #ea580c;
   --color-surface: #ffffff;
   --color-background: #f8fafc;
   
   --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
-  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --shadow-glass: 0 8px 32px 0 rgba(249, 115, 22, 0.07);
 }
 
 @layer base {
@@ -18,9 +18,9 @@
     @apply bg-background text-primary antialiased selection:bg-accent/20;
     direction: rtl;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(253,16%,7%,0.03) 0, transparent 50%), 
-      radial-gradient(at 50% 0%, hsla(225,39%,30%,0.06) 0, transparent 50%), 
-      radial-gradient(at 100% 0%, hsla(339,49%,30%,0.05) 0, transparent 50%);
+      radial-gradient(at 0% 0%, hsla(25,100%,90%,0.15) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(20,100%,95%,0.1) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, hsla(30,100%,90%,0.1) 0, transparent 50%);
     background-attachment: fixed;
     min-height: 100vh;
   }
