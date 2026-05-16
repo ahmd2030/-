@@ -248,8 +248,21 @@ export default function Dashboard() {
           throw new Error(extracted.error);
         }
 
-        const carTypeBase = (extracted.carType && extracted.carType !== '#######') ? extracted.carType : '#######';
-        const branchInfo = (extracted.branch && extracted.branch !== '#######') ? extracted.branch : '';
+        let carTypeBase = (extracted.carType && extracted.carType !== '#######') ? extracted.carType : '#######';
+        let branchInfo = (extracted.branch && extracted.branch !== '#######') ? extracted.branch : '';
+
+        // If carType contains a separator and branch is empty, split them
+        if (branchInfo === '' || branchInfo === '#######') {
+          const separators = [' - ', ' / ', '-', '/'];
+          for (const sep of separators) {
+            if (carTypeBase.includes(sep)) {
+              const parts = carTypeBase.split(sep);
+              carTypeBase = parts[0].trim();
+              branchInfo = parts[parts.length - 1].trim();
+              break;
+            }
+          }
+        }
 
         const data: InvoiceData = {
           ...extracted,
@@ -259,7 +272,7 @@ export default function Dashboard() {
           invoiceNumber: extracted.invoiceNumber || '#######',
           date: extracted.date || '#######',
           plateNumber: extracted.plateNumber || '#######',
-          carType: branchInfo ? `${carTypeBase} - ${branchInfo}` : carTypeBase,
+          carType: carTypeBase,
           branch: branchInfo || '#######',
           totalAmount: extracted.totalAmount || 0,
           status: 'completed',
