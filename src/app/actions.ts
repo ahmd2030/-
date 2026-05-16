@@ -1,38 +1,38 @@
 "use server";
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { InvoiceData } from "@/types";
 
 // Clean the API key to remove any accidental invisible/Arabic characters pasted from Vercel
 const cleanApiKey = (process.env.GEMINI_API_KEY || "").replace(/[^\x20-\x7E]/g, '');
-const ai = new GoogleGenAI({ apiKey: cleanApiKey, httpOptions: { apiVersion: 'v1' } } as any);
+const genAI = new GoogleGenerativeAI(cleanApiKey);
 
 const INVOICE_SCHEMA = {
-  type: Type.OBJECT,
+  type: SchemaType.OBJECT,
   properties: {
-    invoiceNumber: { type: Type.STRING, description: "رقم الفاتورة" },
-    date: { type: Type.STRING, description: "تاريخ الفاتورة بتنسيق YYYY-MM-DD" },
-    plateNumber: { type: Type.STRING, description: "رقم لوحة السيارة (استخرجه بالترتيب البصري المحض من اليمين لليسار، مثال: أ ب ج 123)" },
-    count: { type: Type.STRING, description: "العدد أو العداد المعروض في الفاتورة" },
-    carType: { type: Type.STRING, description: "نوع السيارة أو موديلها" },
-    branch: { type: Type.STRING, description: "اسم المنطقة أو الفرع (مثل الدمام، جدة، الخبر، الرياض، الخ)" },
-    itemsDescription: { type: Type.STRING, description: "وصف موجز للأصناف المباعة أو الخدمات المقدمة" },
-    subTotal: { type: Type.NUMBER, description: "المبلغ الإجمالي قبل الضريبة" },
-    taxAmount: { type: Type.NUMBER, description: "مبلغ الضريبة (VAT)" },
-    totalAmount: { type: Type.NUMBER, description: "المبلغ الإجمالي النهائي شامل الضريبة" },
-    notes: { type: Type.STRING, description: "أي ملاحظات إضافية هامة" },
+    invoiceNumber: { type: SchemaType.STRING, description: "رقم الفاتورة" },
+    date: { type: SchemaType.STRING, description: "تاريخ الفاتورة بتنسيق YYYY-MM-DD" },
+    plateNumber: { type: SchemaType.STRING, description: "رقم لوحة السيارة (استخرجه بالترتيب البصري المحض من اليمين لليسار، مثال: أ ب ج 123)" },
+    count: { type: SchemaType.STRING, description: "العدد أو العداد المعروض في الفاتورة" },
+    carType: { type: SchemaType.STRING, description: "نوع السيارة أو موديلها" },
+    branch: { type: SchemaType.STRING, description: "اسم المنطقة أو الفرع (مثل الدمام، جدة، الخبر، الرياض، الخ)" },
+    itemsDescription: { type: SchemaType.STRING, description: "وصف موجز للأصناف المباعة أو الخدمات المقدمة" },
+    subTotal: { type: SchemaType.NUMBER, description: "المبلغ الإجمالي قبل الضريبة" },
+    taxAmount: { type: SchemaType.NUMBER, description: "مبلغ الضريبة (VAT)" },
+    totalAmount: { type: SchemaType.NUMBER, description: "المبلغ الإجمالي النهائي شامل الضريبة" },
+    notes: { type: SchemaType.STRING, description: "أي ملاحظات إضافية هامة" },
     locations: {
-      type: Type.OBJECT,
+      type: SchemaType.OBJECT,
       description: "إحداثيات المربعات المحيطة لكل حقل كـ [ymin, xmin, ymax, xmax] (قيم بين 0-1000)",
       properties: {
-        invoiceNumber: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "[ymin, xmin, ymax, xmax]" },
-        date: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        plateNumber: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        count: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        carType: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        branch: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        itemsDescription: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        totalAmount: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+        invoiceNumber: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER }, description: "[ymin, xmin, ymax, xmax]" },
+        date: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
+        plateNumber: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
+        count: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
+        carType: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
+        branch: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
+        itemsDescription: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
+        totalAmount: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
       }
     }
   },
@@ -49,7 +49,7 @@ export async function analyzeInvoiceAction(
   const dynamicProps: any = { ...INVOICE_SCHEMA.properties };
   extraFields.forEach(field => {
     if (field && !dynamicProps[field]) {
-      dynamicProps[field] = { type: Type.STRING, description: `استخرج قيمة الحقل: ${field}` };
+      dynamicProps[field] = { type: SchemaType.STRING, description: `استخرج قيمة الحقل: ${field}` };
     }
   });
 
@@ -86,27 +86,23 @@ export async function analyzeInvoiceAction(
   parts.push({ text: `محتوى النص المستخرج:\n${text}` });
 
   try {
-    const response = await ai.models.generateContent({
+    const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
-      contents: [
-        {
-          role: "user",
-          parts: parts
-        }
-      ],
-      config: {
+      generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.OBJECT,
+          type: SchemaType.OBJECT,
           properties: dynamicProps,
         },
-      },
+      }
     });
 
-    const rawText = response.text || "{}";
+    const result = await model.generateContent(parts);
+    const response = await result.response;
+    const rawText = response.text() || "{}";
     console.log("Gemini raw response:", rawText.substring(0, 200));
-    const result = JSON.parse(rawText);
-    return result;
+    const parsed = JSON.parse(rawText);
+    return parsed;
   } catch (error: any) {
     console.error("Gemini Server Action Error:", error?.message || error);
     console.error("Full error:", JSON.stringify(error, null, 2));
