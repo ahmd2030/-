@@ -61,7 +61,8 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
         const lines = raw.split('\n').filter(l => l.trim() !== '');
         const formatted = lines.map((line, i) => {
           const clean = line.replace(/^\d+[-.)\s]*/, '').trim();
-          return `${i + 1}- ${clean}`;
+          // Use LRM (\u200E) to ensure the number and dash stay on the right (start of line in RTL)
+          return `\u200E${i + 1}- ${clean}`;
         }).join('\n');
         row[h] = formatted || placeholder;
       }
