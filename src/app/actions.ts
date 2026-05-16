@@ -42,7 +42,7 @@ export async function analyzeInvoiceAction(
   base64Image?: string,
   extraFields: string[] = [],
   hintLocations?: Record<string, number[]>
-): Promise<Partial<InvoiceData>> {
+): Promise<Partial<InvoiceData> & { error?: string }> {
   
   const dynamicProps: any = { ...INVOICE_SCHEMA.properties };
   extraFields.forEach(field => {
@@ -108,6 +108,6 @@ export async function analyzeInvoiceAction(
   } catch (error: any) {
     console.error("Gemini Server Action Error:", error?.message || error);
     console.error("Full error:", JSON.stringify(error, null, 2));
-    throw new Error(`فشل في تحليل الفاتورة: ${error?.message || 'خطأ غير معروف'}`);
+    return { error: `فشل في تحليل الفاتورة: ${error?.message || 'خطأ غير معروف'}` };
   }
 }

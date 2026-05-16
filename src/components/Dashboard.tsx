@@ -226,6 +226,11 @@ export default function Dashboard() {
 
         const extracted = await analyzeInvoiceAction(text, imgForAI, template?.headers || [], masterTemplate || undefined);
         
+        // If the server action returned an error property, throw it here
+        if (extracted.error) {
+          throw new Error(extracted.error);
+        }
+
         const carTypeBase = (extracted.carType && extracted.carType !== '#######') ? extracted.carType : '#######';
         const branchInfo = (extracted.branch && extracted.branch !== '#######') ? extracted.branch : '';
 
