@@ -5,9 +5,9 @@
 
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure worker - using a more robust loading method
+// Configure worker - using local file to prevent CDN blocking issues (CORS, Adblockers)
 if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 }
 
 export async function extractTextFromPdf(file: File): Promise<string> {
