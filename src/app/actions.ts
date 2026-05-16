@@ -5,7 +5,7 @@ import { InvoiceData } from "@/types";
 
 // Clean the API key to remove any accidental invisible/Arabic characters pasted from Vercel
 const cleanApiKey = (process.env.GEMINI_API_KEY || "").replace(/[^\x20-\x7E]/g, '');
-const ai = new GoogleGenAI({ apiKey: cleanApiKey });
+const ai = new GoogleGenAI({ apiKey: cleanApiKey, httpOptions: { apiVersion: 'v1' } } as any);
 
 const INVOICE_SCHEMA = {
   type: Type.OBJECT,
@@ -87,7 +87,7 @@ export async function analyzeInvoiceAction(
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash-8b",
+      model: "gemini-1.5-flash",
       contents: [
         {
           role: "user",
