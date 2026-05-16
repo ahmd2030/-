@@ -3,7 +3,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { InvoiceData } from "@/types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+// Clean the API key to remove any accidental invisible/Arabic characters pasted from Vercel
+const cleanApiKey = (process.env.GEMINI_API_KEY || "").replace(/[^\x20-\x7E]/g, '');
+const ai = new GoogleGenAI({ apiKey: cleanApiKey });
 
 const INVOICE_SCHEMA = {
   type: Type.OBJECT,
