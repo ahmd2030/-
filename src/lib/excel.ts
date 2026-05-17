@@ -55,10 +55,10 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
       else if (h === 'العدد' || h.includes('count') || h.includes('عداد')) row[h] = item.count || '';
       else if (h === 'نوع السيارة' || h.includes('car')) row[h] = item.carType || placeholder;
       else if (h === 'الفرع' || h.includes('branch')) row[h] = item.branch || placeholder;
-      else if (h === 'إسم الأصناف' || h.includes('item')) {
-        const raw = item.itemsDescription || placeholder;
+      else if (h.replace(/أ/g, 'ا') === 'اسم الاصناف' || h.includes('item') || h.includes('صنف') || h.includes('اصناف')) {
+        const raw = item.itemsDescription || (item as any)[h] || placeholder;
         // Clean up and ensure 1-, 2-, 3- format if it's a list
-        const lines = raw.split('\n').filter(l => l.trim() !== '');
+        const lines = raw.split(/\n|;/).filter((l: string) => l.trim() !== '');
         const formatted = lines.map((line, i) => {
           const clean = line.replace(/^\d+[-.)\s]*/, '').trim();
           // Use LRM (\u200E) to ensure the number and dash stay on the right (start of line in RTL)
