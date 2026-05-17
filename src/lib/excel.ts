@@ -59,7 +59,7 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
         const raw = item.itemsDescription || (item as any)[h] || placeholder;
         // Clean up and ensure 1-, 2-, 3- format if it's a list
         const lines = raw.split(/\n|;/).filter((l: string) => l.trim() !== '');
-        const formatted = lines.map((line, i) => {
+        const formatted = lines.map((line: string, i: number) => {
           const clean = line.replace(/^\d+[-.)\s]*/, '').trim();
           // Use LRM (\u200E) to ensure the number and dash stay on the right (start of line in RTL)
           return `\u200E${i + 1}- ${clean}`;
