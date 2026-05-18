@@ -204,6 +204,7 @@ export default function Dashboard() {
 
       // Find the row in Excel
       const excelRow = template.existingData.find(row => {
+        if (!row || typeof row !== 'object') return false;
         const keys = Object.keys(row);
         const invoiceKey = keys.find(k => {
           const hk = k.trim().replace(/أ/g, 'ا').replace(/إ/g, 'ا');
@@ -410,7 +411,7 @@ export default function Dashboard() {
   const startProcessing = async () => {
     if (pdfs.length === 0) return;
     isAbortedRef.current = false;
-    setState(prev => ({ ...prev, total: pdfs.length, processed: 0, isProcessing: true, mode: AppMode.ANALYSIS }));
+    setState(prev => ({ ...prev, total: pdfs.length, processed: 0, isProcessing: true }));
 
     // Load past knowledge for AI learning
     const knowledge = await getAllKnowledge();
@@ -449,6 +450,10 @@ export default function Dashboard() {
         }
 
         const extracted = await analyzeInvoiceAction(text, imgForAI, template?.headers || [], masterTemplate || undefined, knowledge);
+        
+        if (!extracted) {
+          throw new Error("فشل في استخراج البيانات من الفاتورة");
+        }
         
         // If the server action returned an error property, throw it here
         if (extracted.error) {
