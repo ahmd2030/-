@@ -170,6 +170,204 @@ export default function Dashboard() {
     loadPreview();
   }, [selectedInvoice]);
 
+  // Perform verification and matching
+  useEffect(() => {
+    if (results.length === 0) {
+      setVerificationResults([]);
+      return;
+    }
+
+    if (!template || !template.existingData || template.existingData.length === 0) {
+      // If no template is uploaded, show all as "Not found in Excel"
+      setVerificationResults(results.map(res => ({
+        fileName: res.fileName,
+        invoiceNumber: res.invoiceNumber || '#######',
+        foundInExcel: false,
+        mismatches: ['لم يتم رفع ملف إكسل للمطابقة'],
+        extractedData: res
+      })));
+      return;
+    }
+
+    const newVerificationResults = results.map(res => {
+      const invoiceNum = String(res.invoiceNumber || '').trim();
+      
+      if (invoiceNum === '' || invoiceNum === '#######' || invoiceNum === 'خطأ') {
+        return {
+          fileName: res.fileName,
+          invoiceNumber: invoiceNum,
+          foundInExcel: false,
+          mismatches: ['رقم الفاتورة غير صالح للاستخراج'],
+          extractedData: res
+        };
+      }
+
+      // Find the row in Excel
+      const excelRow = template.existingData.find(row => {
+        const keys = Object.keys(row);
+        const invoiceKey = keys.find(k => {
+          const hk = k.trim().replace(/أ/g, 'ا').replace(/إ/g, 'ا');
+          return hk === 'رقم الفاتورة' || 
+                 hk === 'رقم فاتورة' || 
+                 hk.toLowerCase().includes('invoice') || 
+                 hk.toLowerCase() === 'inv';
+        });
+
+        if (!invoiceKey) return false;
+        
+        const valExcel = String(row[invoiceKey] || '').trim();
+        return valExcel !== '' && valExcel === invoiceNum;
+      });
+
+      if (!excelRow) {
+        return {
+          fileName: res.fileName,
+          invoiceNumber: invoiceNum,
+          foundInExcel: false,
+          mismatches: ['الفاتورة غير موجودة في ملف الإكسل'],
+          extractedData: res
+        };
+      }
+
+      // If found, perform mismatch checks
+      const mismatches: string[] = [];
+      const originalData: Record<string, any> = {};
+      const excelKeys = Object.keys(excelRow);
+
+      // 1. Compare totalAmount
+      const totalKey = excelKeys.find(k => {
+        const hk = k.trim().replace(/أ/g, 'ا').replace(/إ/g, 'ا');
+        return hk === 'الاجمالي بعد الضريبة' || 
+               hk === 'الإجمالي بعد الضريبة' ||
+               hk === 'الاجمالي النهائي' ||
+               hk === 'الإجمالي النهائي' ||
+               hk === 'الاجمالي' ||
+               hk === 'الإجمالي' ||
+               hk.toLowerCase() === 'total' ||
+               hk.toLowerCase() === 'total amount';
+      });
+
+      if (totalKey) {
+        const excelTotalVal = excelRow[totalKey];
+        const excelTotal = parseFloat(String(excelTotalVal || '0').replace(/[^0-9.-]/g, ''));
+        const pdfTotal = parseFloat(String(res.totalAmount || '0'));
+        if (!isNaN(excelTotal) && !isNaN(pdfTotal) && Math.abs(excelTotal - pdfTotal) > 0.05) {
+          mismatches.push('السعر خطأ');
+          originalData['totalAmount'] = excelTotalVal;
+        }
+      }
+
+      // 2. Compare date
+      const dateKey = excelKeys.find(k => {
+        const hk = k.trim();
+        return hk === 'التاريخ' || hk.toLowerCase() === 'date';
+      });
+
+      if (dateKey) {
+        const excelDateVal = String(excelRow[dateKey] || '').trim();
+        const pdfDate = String(res.date || '').trim();
+        
+        if (excelDateVal && pdfDate && excelDateVal !== '#######' && pdfDate !== '#######') {
+          const cleanExcel = excelDateVal.replace(/[^0-9-/.]/g, '');
+          const cleanPdf = pdfDate.replace(/[^0-9-/.]/g, '');
+          
+          if (cleanExcel && cleanPdf && cleanExcel !== cleanPdf) {
+            mismatches.push('التاريخ غير متطابق');
+            originalData['date'] = excelDateVal;
+          }
+        }
+      }
+
+      // 3. Compare plateNumber
+      const plateKey = excelKeys.find(k => {
+        const hk = k.trim();
+        return hk === 'اللوحة' || hk.toLowerCase().includes('plate');
+      });
+
+      if (plateKey) {
+        const excelPlateVal = String(excelRow[plateKey] || '').trim();
+        const pdfPlate = String(res.plateNumber || '').trim();
+        if (excelPlateVal && pdfPlate && excelPlateVal !== '#######' && pdfPlate !== '#######' && excelPlateVal !== pdfPlate) {
+          mismatches.push('رقم اللوحة غير متطابق');
+          originalData['plateNumber'] = excelPlateVal;
+        }
+      }
+
+      // 4. Compare carType
+      const carKey = excelKeys.find(k => {
+        const hk = k.trim();
+        return hk === 'نوع السيارة' || hk.toLowerCase().includes('car');
+      });
+
+      if (carKey) {
+        const excelCarVal = String(excelRow[carKey] || '').trim();
+        const pdfCar = String(res.carType || '').trim();
+        if (excelCarVal && pdfCar && excelCarVal !== '#######' && pdfCar !== '#######' && excelCarVal !== pdfCar) {
+          mismatches.push('نوع السيارة غير متطابق');
+          originalData['carType'] = excelCarVal;
+        }
+      }
+
+      // 5. Compare itemsDescription
+      const itemsKey = excelKeys.find(k => {
+        const hk = k.trim().replace(/أ/g, 'ا').replace(/إ/g, 'ا');
+        return hk === 'اسم الاصناف' || hk === 'اسم الأصناف' || hk === 'الأصناف' || hk === 'الاصناف' || hk.toLowerCase().includes('item');
+      });
+
+      if (itemsKey) {
+        const excelItemsVal = String(excelRow[itemsKey] || '').trim();
+        const pdfItems = String(res.itemsDescription || '').trim();
+        
+        if (excelItemsVal && pdfItems && excelItemsVal !== '#######' && pdfItems !== '#######') {
+          const excelWords = excelItemsVal.replace(/[0-9\-\.\n\r\t،,;؛\/]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+          const pdfWords = pdfItems.replace(/[0-9\-\.\n\r\t،,;؛\/]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+          
+          if (excelWords.length > 0) {
+            let matchCount = 0;
+            excelWords.forEach(w => {
+              if (pdfWords.some(pw => pw.includes(w) || w.includes(pw))) {
+                matchCount++;
+              }
+            });
+            const matchRatio = matchCount / excelWords.length;
+            if (matchRatio < 0.4) {
+              mismatches.push('صنف غير مسجل / الأصناف غير متطابقة');
+              originalData['itemsDescription'] = excelItemsVal;
+            }
+          }
+        }
+      }
+
+      // 6. Check for refunded/returned invoice
+      const notesKey = excelKeys.find(k => {
+        const hk = k.trim();
+        return hk === 'ملاحظات' || hk.toLowerCase().includes('note');
+      });
+
+      const excelNotes = notesKey ? String(excelRow[notesKey] || '').trim() : '';
+      const pdfTotal = parseFloat(String(res.totalAmount || '0'));
+      const excelTotal = totalKey ? parseFloat(String(excelRow[totalKey] || '0').replace(/[^0-9.-]/g, '')) : 0;
+      
+      const isReturned = pdfTotal < 0 || excelTotal < 0 || 
+                         excelNotes.includes('مردود') || excelNotes.includes('مرتجع') || excelNotes.includes('مسترجع') ||
+                         String(res.notes || '').includes('مردود') || String(res.notes || '').includes('مرتجع') || String(res.notes || '').includes('مسترجع');
+      if (isReturned) {
+        mismatches.push('الفاتورة مردودة');
+      }
+
+      return {
+        fileName: res.fileName,
+        invoiceNumber: invoiceNum,
+        foundInExcel: true,
+        mismatches,
+        originalData: excelRow,
+        extractedData: res
+      };
+    });
+
+    setVerificationResults(newVerificationResults);
+  }, [results, template]);
+
   // Drag and drop handlers
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -658,6 +856,7 @@ export default function Dashboard() {
             hoveredField={hoveredField}
             locked={lockedLayouts[selectedInvoice.fileName] || false}
             hasChanges={JSON.stringify(editData) !== JSON.stringify(selectedInvoice)}
+            verificationResult={verificationResults.find(v => v.fileName === selectedInvoice.fileName)}
             onClose={() => setSelectedInvoice(null)}
             onEdit={setEditData}
             onSave={handleSaveEdit}

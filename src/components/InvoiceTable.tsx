@@ -97,53 +97,97 @@ export default function InvoiceTable({
                   <th className="p-3 text-[10px] font-black uppercase tracking-wider text-slate-400 w-16">عرض</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
-                {verificationResults.map((v, idx) => (
-                  <motion.tr 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    key={idx} 
-                    className={cn(
-                      "hover:bg-accent/5 transition-colors cursor-pointer",
-                      selectedInvoice?.fileName === v.fileName && "bg-accent/5"
-                    )}
-                    onClick={() => v.extractedData && onSelect(v.extractedData)}
-                  >
-                    <td className="p-3 text-xs font-bold text-slate-400 text-center">{idx + 1}</td>
-                    <td className="p-3 text-xs font-bold text-slate-700 max-w-[180px] truncate">{v.fileName}</td>
-                    <td className="p-3 text-xs font-medium text-slate-600">{v.invoiceNumber}</td>
-                    <td className="p-3">
-                      {v.foundInExcel ? (
-                        <span className="inline-flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full text-[10px] font-bold">
-                          <CheckCircle2 className="w-3 h-3" /> تم العثور عليها
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-red-500 bg-red-50 px-2 py-1 rounded-full text-[10px] font-bold">
-                          <AlertCircle className="w-3 h-3" /> غير موجودة
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-3">
-                      {v.mismatches.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {v.mismatches.map((m, mi) => (
-                            <span key={mi} className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">{m}</span>
-                          ))}
-                        </div>
-                      ) : v.foundInExcel ? (
-                        <span className="text-[10px] text-green-600 font-bold">مطابقة تماماً ✓</span>
-                      ) : '-'}
-                    </td>
-                    <td className="p-3 text-center">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); v.extractedData && onSelect(v.extractedData); }}
-                        className="p-1.5 hover:bg-white rounded-lg text-slate-400 hover:text-accent transition-all"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </motion.tr>
-                ))}
+              <tbody className="divide-y divide-slate-100">
+                {verificationResults.map((v, idx) => {
+                  const isSelected = selectedInvoice?.fileName === v.fileName;
+                  const hasMismatches = v.mismatches.length > 0;
+                  
+                  let rowClass = "hover:bg-slate-50 border-r-4 border-transparent";
+                  let statusBadge = null;
+                  let mismatchContent = null;
+
+                  if (!v.foundInExcel) {
+                    // 🔴 Red State - Not found in Excel
+                    rowClass = cn(
+                      "bg-red-50/60 hover:bg-red-100/40 border-r-4 border-red-500 transition-all duration-200 cursor-pointer",
+                      isSelected && "ring-2 ring-red-500/20 bg-red-100/60"
+                    );
+                    statusBadge = (
+                      <span className="inline-flex items-center gap-1 text-red-600 bg-red-100/60 px-3 py-1 rounded-full text-[10px] font-black shadow-sm">
+                        <AlertCircle className="w-3.5 h-3.5" /> غير موجودة في الإكسل
+                      </span>
+                    );
+                    mismatchContent = (
+                      <span className="text-xs text-red-600 font-bold flex items-center gap-1">
+                        ⚠️ الفاتورة غير موجودة بالكامل في سجلات الإكسل
+                      </span>
+                    );
+                  } else if (hasMismatches) {
+                    // 🟠 Orange State - Found but has mismatches
+                    rowClass = cn(
+                      "bg-amber-50/60 hover:bg-amber-100/40 border-r-4 border-amber-500 transition-all duration-200 cursor-pointer",
+                      isSelected && "ring-2 ring-amber-500/20 bg-amber-100/60"
+                    );
+                    statusBadge = (
+                      <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-100/60 px-3 py-1 rounded-full text-[10px] font-black shadow-sm">
+                        <AlertCircle className="w-3.5 h-3.5" /> يوجد فروقات وتعارض
+                      </span>
+                    );
+                    mismatchContent = (
+                      <div className="flex flex-wrap gap-1.5">
+                        {v.mismatches.map((m, mi) => (
+                          <span 
+                            key={mi} 
+                            className="inline-flex items-center gap-0.5 text-[9px] bg-amber-500 text-white px-2 py-0.5 rounded-lg font-black shadow-sm"
+                          >
+                            ⚡ {m}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  } else {
+                    // 🟢 Green State - Perfect Match
+                    rowClass = cn(
+                      "bg-emerald-50/30 hover:bg-emerald-50/70 border-r-4 border-emerald-500 transition-all duration-200 cursor-pointer",
+                      isSelected && "ring-2 ring-emerald-500/20 bg-emerald-100/40"
+                    );
+                    statusBadge = (
+                      <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100/60 px-3 py-1 rounded-full text-[10px] font-black shadow-sm">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> مطابقة تامة
+                      </span>
+                    );
+                    mismatchContent = (
+                      <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                        ✓ متطابقة بالكامل مع سجلات الإكسل
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <motion.tr 
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.02 }}
+                      key={idx} 
+                      className={rowClass}
+                      onClick={() => v.extractedData && onSelect(v.extractedData)}
+                    >
+                      <td className="p-4 text-xs font-bold text-slate-400 text-center">{idx + 1}</td>
+                      <td className="p-4 text-xs font-bold text-slate-700 max-w-[200px] truncate">{v.fileName}</td>
+                      <td className="p-4 text-xs font-black text-accent">{v.invoiceNumber}</td>
+                      <td className="p-4">{statusBadge}</td>
+                      <td className="p-4">{mismatchContent}</td>
+                      <td className="p-4 text-center">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); v.extractedData && onSelect(v.extractedData); }}
+                          className="p-2 hover:bg-white rounded-xl text-slate-400 hover:text-accent transition-all shadow-sm border border-transparent hover:border-slate-100"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
               </tbody>
             </table>
           ) : (

@@ -25,7 +25,7 @@ import {
   Minus,
   Maximize2
 } from 'lucide-react';
-import { InvoiceData, FIELD_COLORS, FIELD_NAMES } from '@/types';
+import { InvoiceData, FIELD_COLORS, FIELD_NAMES, VerificationResult } from '@/types';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -41,6 +41,7 @@ interface InvoicePreviewModalProps {
   hoveredField: string | null;
   locked: boolean;
   hasChanges: boolean;
+  verificationResult?: VerificationResult;
   onClose: () => void;
   onEdit: (data: InvoiceData) => void;
   onSave: () => void;
@@ -58,6 +59,7 @@ export default function InvoicePreviewModal({
   hoveredField,
   locked,
   hasChanges,
+  verificationResult,
   onClose,
   onEdit,
   onSave,
@@ -72,6 +74,28 @@ export default function InvoicePreviewModal({
   const [activeDragField, setActiveDragField] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  // Helper to extract Excel value for comparison
+  const getExcelValueForField = (field: string) => {
+    if (!verificationResult || !verificationResult.originalData) return null;
+    const row = verificationResult.originalData;
+    const keys = Object.keys(row);
+    
+    const matchKey = keys.find(k => {
+      const hk = k.trim().replace(/أ/g, 'ا').replace(/إ/g, 'ا');
+      if (field === 'invoiceNumber') return hk === 'رقم الفاتورة' || hk === 'رقم فاتورة' || hk.toLowerCase().includes('invoice');
+      if (field === 'totalAmount') return hk === 'الاجمالي بعد الضريبة' || hk === 'الإجمالي بعد الضريبة' || hk === 'الاجمالي النهائي' || hk === 'الإجمالي النهائي' || hk === 'الاجمالي' || hk === 'الإجمالي' || hk.toLowerCase() === 'total';
+      if (field === 'date') return hk === 'التاريخ' || hk.toLowerCase() === 'date';
+      if (field === 'plateNumber') return hk === 'اللوحة' || hk.toLowerCase().includes('plate');
+      if (field === 'carType') return hk === 'نوع السيارة' || hk.toLowerCase().includes('car');
+      if (field === 'itemsDescription') return hk === 'اسم الاصناف' || hk === 'اسم الأصناف' || hk === 'الأصناف' || hk === 'الاصناف' || hk.toLowerCase().includes('item');
+      if (field === 'branch') return hk === 'الفرع' || hk.toLowerCase().includes('branch');
+      if (field === 'count') return hk === 'العدد' || hk.toLowerCase().includes('count') || hk.includes('عداد');
+      return false;
+    });
+
+    return matchKey ? row[matchKey] : null;
+  };
   
   if (!editData) return null;
 
@@ -129,6 +153,112 @@ export default function InvoicePreviewModal({
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2 space-y-5 custom-scrollbar pb-10">
+            {/* Verification Result Audit Card */}
+            {verificationResult && (
+              <div className="mb-6">
+                {!verificationResult.foundInExcel ? (
+                  // Red State - Not found
+                  <div className="bg-red-50 border-2 border-red-200 rounded-[2rem] p-6 text-right space-y-3 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="w-10 h-10 bg-red-100 rounded-2xl flex items-center justify-center text-red-600 font-bold">⚠️</span>
+                      <h4 className="font-black text-red-900 text-sm">الفاتورة غير مسجلة في الإكسل</h4>
+                    </div>
+                    <p className="text-[11px] text-red-700 leading-relaxed font-bold">
+                      رقم الفاتورة الحالي (<span className="font-black underline">{invoice.invoiceNumber}</span>) غير مسجل في ملف الإكسل المرفوع.
+                    </p>
+                    <div className="text-[10px] text-red-500 bg-white/80 p-3.5 rounded-2xl border border-red-100 font-bold leading-normal">
+                      💡 نصيحة: يرجى التحقق مما إذا كانت هذه الفاتورة جديدة أو مستبعدة أو تحتاج للإضافة في سجل الإكسل يدوياً.
+                    </div>
+                  </div>
+                ) : verificationResult.mismatches.length > 0 ? (
+                  // Orange State - Discrepancies
+                  <div className="bg-amber-50 border-2 border-amber-200 rounded-[2rem] p-6 text-right space-y-4 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="w-10 h-10 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 font-bold">⚡</span>
+                      <h4 className="font-black text-amber-900 text-sm">تم اكتشاف فروقات في البيانات</h4>
+                    </div>
+                    <p className="text-[11px] text-amber-800 leading-relaxed font-bold">
+                      تم العثور على الفاتورة في الإكسل، ولكن بالقيم التالية التي لا تتطابق مع ملف الفاتورة المرفوعة:
+                    </p>
+
+                    {/* Comparison Table */}
+                    <div className="overflow-hidden border border-amber-200 rounded-2xl bg-white shadow-sm">
+                      <table className="w-full text-right text-[10px]">
+                        <thead className="bg-amber-100/50 border-b border-amber-200">
+                          <tr>
+                            <th className="p-2 font-black text-amber-900">الحقل</th>
+                            <th className="p-2 font-black text-amber-900 text-center">في الفاتورة (PDF)</th>
+                            <th className="p-2 font-black text-amber-900 text-center">في الإكسل (Excel)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-amber-100">
+                          {(Object.keys(FIELD_NAMES) as Array<keyof typeof FIELD_NAMES>).map(field => {
+                            const excelVal = getExcelValueForField(field);
+                            const pdfVal = editData[field];
+                            
+                            let hasError = false;
+                            if (field === 'totalAmount') {
+                              const eTot = parseFloat(String(excelVal || '0').replace(/[^0-9.-]/g, ''));
+                              const pTot = parseFloat(String(pdfVal || '0'));
+                              hasError = !isNaN(eTot) && !isNaN(pTot) && Math.abs(eTot - pTot) > 0.05;
+                            } else if (field === 'date' && excelVal && pdfVal && excelVal !== '#######' && pdfVal !== '#######') {
+                              hasError = String(excelVal).replace(/[^0-9]/g, '') !== String(pdfVal).replace(/[^0-9]/g, '');
+                            } else if (field === 'plateNumber' && excelVal && pdfVal && excelVal !== '#######' && pdfVal !== '#######') {
+                              hasError = String(excelVal).trim() !== String(pdfVal).trim();
+                            } else if (field === 'carType' && excelVal && pdfVal && excelVal !== '#######' && pdfVal !== '#######') {
+                              hasError = String(excelVal).trim() !== String(pdfVal).trim();
+                            } else if (field === 'itemsDescription' && excelVal && pdfVal && excelVal !== '#######' && pdfVal !== '#######') {
+                              const excelWords = String(excelVal).replace(/[0-9\-\.\n\r\t،,;؛\/]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+                              const pdfWords = String(pdfVal).replace(/[0-9\-\.\n\r\t،,;؛\/]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+                              if (excelWords.length > 0) {
+                                let matchCount = 0;
+                                excelWords.forEach(w => {
+                                  if (pdfWords.some(pw => pw.includes(w) || w.includes(pw))) matchCount++;
+                                });
+                                hasError = (matchCount / excelWords.length) < 0.4;
+                              }
+                            }
+
+                            if (!hasError && field !== 'totalAmount' && field !== 'itemsDescription' && field !== 'date') return null;
+                            if (!excelVal && !pdfVal) return null;
+
+                            return (
+                              <tr key={field} className={cn(hasError ? "bg-amber-50/50 font-black text-amber-900" : "")}>
+                                <td className="p-2 text-slate-500 font-bold">{FIELD_NAMES[field]}</td>
+                                <td className="p-2 text-center text-slate-800">
+                                  {field === 'totalAmount' ? `${Number(pdfVal).toLocaleString()} ر.س` : String(pdfVal).slice(0, 30)}
+                                  {hasError && <span className="text-amber-600 mr-1">⚠️</span>}
+                                </td>
+                                <td className="p-2 text-center text-amber-800">
+                                  {field === 'totalAmount' && !isNaN(parseFloat(String(excelVal))) ? `${Number(parseFloat(String(excelVal).replace(/[^0-9.-]/g, ''))).toLocaleString()} ر.س` : String(excelVal || '-').slice(0, 30)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    {verificationResult.mismatches.includes('الفاتورة مردودة') && (
+                      <div className="inline-flex items-center gap-1.5 text-[9px] bg-red-50 text-red-600 p-2.5 rounded-2xl font-black w-full justify-center border border-red-100 shadow-sm leading-normal">
+                        🔄 تنبيه: تم رصد إشارات تدل على أن هذه الفاتورة مردودة أو مرتجعة!
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // Green State - Perfect match
+                  <div className="bg-emerald-50 border-2 border-emerald-200 rounded-[2rem] p-6 text-right space-y-2 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="w-10 h-10 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 font-bold">✓</span>
+                      <h4 className="font-black text-emerald-900 text-sm">مطابقة تامة للبيانات</h4>
+                    </div>
+                    <p className="text-[11px] text-emerald-700 leading-relaxed font-bold">
+                      جميع الحقول المستخرجة من الفاتورة تتطابق بالكامل وبدقة 100% مع السجل المطابق لها في ملف الإكسل.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Field Inputs */}
             {(Object.keys(FIELD_COLORS) as Array<keyof typeof FIELD_COLORS>).map(field => (
               <div 
