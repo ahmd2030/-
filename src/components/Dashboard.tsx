@@ -36,11 +36,20 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export default function Dashboard() {
-  const [pdfs, setPdfs] = useState<File[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [template, setTemplate] = useState<ExcelTemplate | null>(null);
-  const [results, setResults] = useState<InvoiceData[]>([]);
+  // Analysis Workspace State (تحليل واستخراج)
+  const [analysisPdfs, setAnalysisPdfs] = useState<File[]>([]);
+  const [analysisTemplate, setAnalysisTemplate] = useState<ExcelTemplate | null>(null);
+  const [analysisResults, setAnalysisResults] = useState<InvoiceData[]>([]);
+
+  // Verification Workspace State (مطابقة وتدقيق)
+  const [verificationPdfs, setVerificationPdfs] = useState<File[]>([]);
+  const [verificationTemplate, setVerificationTemplate] = useState<ExcelTemplate | null>(null);
+  const [verificationRawResults, setVerificationRawResults] = useState<InvoiceData[]>([]);
+  
+  // Shared comparative matching results state
   const [verificationResults, setVerificationResults] = useState<VerificationResult[]>([]);
+
+  const [isDragging, setIsDragging] = useState(false);
   const [currentFileName, setCurrentFileName] = useState<string>('');
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [editData, setEditData] = useState<InvoiceData | null>(null);
@@ -67,6 +76,11 @@ export default function Dashboard() {
   const templateInputRef = useRef<HTMLInputElement>(null);
   const isAbortedRef = useRef(false);
 
+  // Dynamic Workspace Getters
+  const pdfs = state.mode === AppMode.ANALYSIS ? analysisPdfs : verificationPdfs;
+  const template = state.mode === AppMode.ANALYSIS ? analysisTemplate : verificationTemplate;
+  const results = state.mode === AppMode.ANALYSIS ? analysisResults : verificationRawResults;
+
   // Load persisted data
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -74,7 +88,8 @@ export default function Dashboard() {
         const savedLocks = localStorage.getItem('lockedLayouts');
         const savedTrained = localStorage.getItem('trainedLayouts');
         const savedMaster = localStorage.getItem('masterTemplate');
-        const savedResults = localStorage.getItem('invoiceResults');
+        const savedAnalysisResults = localStorage.getItem('analysisResults');
+        const savedVerificationRawResults = localStorage.getItem('verificationRawResults');
         const savedOpened = localStorage.getItem('openedInvoiceIds');
         const savedLast = localStorage.getItem('lastWorkedOnId');
 
@@ -84,15 +99,13 @@ export default function Dashboard() {
         if (savedOpened) setOpenedIds(new Set(JSON.parse(savedOpened)));
         if (savedLast) setLastWorkedOnId(savedLast);
 
-        if (savedResults) {
-          const parsed = JSON.parse(savedResults);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const withIds = parsed.map((item: any) => ({
-              ...item,
-              id: item.id || (Math.random() + Date.now())
-            }));
-            setResults(withIds);
-          }
+        if (savedAnalysisResults) {
+          const parsed = JSON.parse(savedAnalysisResults);
+          if (Array.isArray(parsed)) setAnalysisResults(parsed);
+        }
+        if (savedVerificationRawResults) {
+          const parsed = JSON.parse(savedVerificationRawResults);
+          if (Array.isArray(parsed)) setVerificationRawResults(parsed);
         }
       } catch (e) {
         console.error("Failed to load from localStorage", e);
@@ -108,9 +121,10 @@ export default function Dashboard() {
       localStorage.setItem('masterTemplate', JSON.stringify(masterTemplate));
       localStorage.setItem('openedInvoiceIds', JSON.stringify(Array.from(openedIds)));
       if (lastWorkedOnId) localStorage.setItem('lastWorkedOnId', String(lastWorkedOnId));
-      if (results.length > 0) localStorage.setItem('invoiceResults', JSON.stringify(results));
+      localStorage.setItem('analysisResults', JSON.stringify(analysisResults));
+      localStorage.setItem('verificationRawResults', JSON.stringify(verificationRawResults));
     }
-  }, [lockedLayouts, trainedLayouts, masterTemplate, results, openedIds, lastWorkedOnId]);
+  }, [lockedLayouts, trainedLayouts, masterTemplate, analysisResults, verificationRawResults, openedIds, lastWorkedOnId]);
 
   // Preview loading
   useEffect(() => {
@@ -172,14 +186,14 @@ export default function Dashboard() {
 
   // Perform verification and matching
   useEffect(() => {
-    if (results.length === 0) {
+    if (verificationRawResults.length === 0) {
       setVerificationResults([]);
       return;
     }
 
-    if (!template || !template.existingData || template.existingData.length === 0) {
+    if (!verificationTemplate || !verificationTemplate.existingData || verificationTemplate.existingData.length === 0) {
       // If no template is uploaded, show all as "Not found in Excel"
-      setVerificationResults(results.map(res => ({
+      setVerificationResults(verificationRawResults.map(res => ({
         fileName: res.fileName,
         invoiceNumber: res.invoiceNumber || '#######',
         foundInExcel: false,
@@ -189,7 +203,7 @@ export default function Dashboard() {
       return;
     }
 
-    const newVerificationResults = results.map(res => {
+    const newVerificationResults = verificationRawResults.map(res => {
       const invoiceNum = String(res.invoiceNumber || '').trim();
       
       if (invoiceNum === '' || invoiceNum === '#######' || invoiceNum === 'خطأ') {
@@ -203,7 +217,7 @@ export default function Dashboard() {
       }
 
       // Find the row in Excel
-      const excelRow = template.existingData.find(row => {
+      const excelRow = verificationTemplate.existingData.find(row => {
         if (!row || typeof row !== 'object') return false;
         const keys = Object.keys(row);
         const invoiceKey = keys.find(k => {
@@ -230,59 +244,62 @@ export default function Dashboard() {
         };
       }
 
-      // If found, perform mismatch checks
       const mismatches: string[] = [];
-      const originalData: Record<string, any> = {};
+      const originalData: any = {};
+
       const excelKeys = Object.keys(excelRow);
 
-      // 1. Compare totalAmount
+      // 1. Compare Date
+      const dateKey = excelKeys.find(k => {
+        const hk = k.trim().replace(/أ/g, 'ا').replace(/إ/g, 'ا');
+        return hk === 'التاريخ' || hk.toLowerCase().includes('date');
+      });
+
+      if (dateKey) {
+        let excelDateVal = String(excelRow[dateKey] || '').trim();
+        
+        // Convert Excel serial date to YYYY-MM-DD if needed
+        if (/^\d+$/.test(excelDateVal)) {
+          const serial = parseInt(excelDateVal, 10);
+          const utc_days = Math.floor(serial - 25569);
+          const utc_value = utc_days * 86400;
+          const date_info = new Date(utc_value * 1000);
+          excelDateVal = date_info.toISOString().split('T')[0];
+        }
+
+        let pdfDate = String(res.date || '').trim();
+        
+        // Format helper
+        const cleanDate = (d: string) => d.replace(/[\/\.]/g, '-');
+        excelDateVal = cleanDate(excelDateVal);
+        pdfDate = cleanDate(pdfDate);
+
+        if (excelDateVal && pdfDate && excelDateVal !== '#######' && pdfDate !== '#######' && excelDateVal !== pdfDate) {
+          mismatches.push('التاريخ غير متطابق');
+          originalData['date'] = excelDateVal;
+        }
+      }
+
+      // 2. Compare Total Amount
       const totalKey = excelKeys.find(k => {
         const hk = k.trim().replace(/أ/g, 'ا').replace(/إ/g, 'ا');
-        return hk === 'الاجمالي بعد الضريبة' || 
-               hk === 'الإجمالي بعد الضريبة' ||
-               hk === 'الاجمالي النهائي' ||
-               hk === 'الإجمالي النهائي' ||
-               hk === 'الاجمالي' ||
-               hk === 'الإجمالي' ||
-               hk.toLowerCase() === 'total' ||
-               hk.toLowerCase() === 'total amount';
+        return hk === 'الاجمالي' || hk === 'الإجمالي' || hk === 'الاجمالي بعد الضريبة' || hk === 'المبلغ النهائي' || hk.toLowerCase().includes('total');
       });
 
       if (totalKey) {
-        const excelTotalVal = excelRow[totalKey];
-        const excelTotal = parseFloat(String(excelTotalVal || '0').replace(/[^0-9.-]/g, ''));
-        const pdfTotal = parseFloat(String(res.totalAmount || '0'));
-        if (!isNaN(excelTotal) && !isNaN(pdfTotal) && Math.abs(excelTotal - pdfTotal) > 0.05) {
-          mismatches.push('السعر خطأ');
+        const excelTotalVal = parseFloat(String(excelRow[totalKey] || '0').replace(/[^0-9.-]/g, ''));
+        const pdfTotalVal = parseFloat(String(res.totalAmount || '0'));
+        
+        if (excelTotalVal !== pdfTotalVal) {
+          mismatches.push('السعر (الإجمالي) غير متطابق');
           originalData['totalAmount'] = excelTotalVal;
         }
       }
 
-      // 2. Compare date
-      const dateKey = excelKeys.find(k => {
-        const hk = k.trim();
-        return hk === 'التاريخ' || hk.toLowerCase() === 'date';
-      });
-
-      if (dateKey) {
-        const excelDateVal = String(excelRow[dateKey] || '').trim();
-        const pdfDate = String(res.date || '').trim();
-        
-        if (excelDateVal && pdfDate && excelDateVal !== '#######' && pdfDate !== '#######') {
-          const cleanExcel = excelDateVal.replace(/[^0-9-/.]/g, '');
-          const cleanPdf = pdfDate.replace(/[^0-9-/.]/g, '');
-          
-          if (cleanExcel && cleanPdf && cleanExcel !== cleanPdf) {
-            mismatches.push('التاريخ غير متطابق');
-            originalData['date'] = excelDateVal;
-          }
-        }
-      }
-
-      // 3. Compare plateNumber
+      // 3. Compare Plate Number
       const plateKey = excelKeys.find(k => {
-        const hk = k.trim();
-        return hk === 'اللوحة' || hk.toLowerCase().includes('plate');
+        const hk = k.trim().replace(/أ/g, 'ا').replace(/إ/g, 'ا');
+        return hk === 'رقم اللوحة' || hk === 'اللوحة' || hk.toLowerCase().includes('plate');
       });
 
       if (plateKey) {
@@ -294,9 +311,9 @@ export default function Dashboard() {
         }
       }
 
-      // 4. Compare carType
+      // 4. Compare Car Type
       const carKey = excelKeys.find(k => {
-        const hk = k.trim();
+        const hk = k.trim().replace(/أ/g, 'ا').replace(/إ/g, 'ا');
         return hk === 'نوع السيارة' || hk.toLowerCase().includes('car');
       });
 
@@ -306,36 +323,6 @@ export default function Dashboard() {
         if (excelCarVal && pdfCar && excelCarVal !== '#######' && pdfCar !== '#######' && excelCarVal !== pdfCar) {
           mismatches.push('نوع السيارة غير متطابق');
           originalData['carType'] = excelCarVal;
-        }
-      }
-
-      // 5. Compare itemsDescription
-      const itemsKey = excelKeys.find(k => {
-        const hk = k.trim().replace(/أ/g, 'ا').replace(/إ/g, 'ا');
-        return hk === 'اسم الاصناف' || hk === 'اسم الأصناف' || hk === 'الأصناف' || hk === 'الاصناف' || hk.toLowerCase().includes('item');
-      });
-
-      if (itemsKey) {
-        const excelItemsVal = String(excelRow[itemsKey] || '').trim();
-        const pdfItems = String(res.itemsDescription || '').trim();
-        
-        if (excelItemsVal && pdfItems && excelItemsVal !== '#######' && pdfItems !== '#######') {
-          const excelWords = excelItemsVal.replace(/[0-9\-\.\n\r\t،,;؛\/]/g, ' ').split(/\s+/).filter(w => w.length > 2);
-          const pdfWords = pdfItems.replace(/[0-9\-\.\n\r\t،,;؛\/]/g, ' ').split(/\s+/).filter(w => w.length > 2);
-          
-          if (excelWords.length > 0) {
-            let matchCount = 0;
-            excelWords.forEach(w => {
-              if (pdfWords.some(pw => pw.includes(w) || w.includes(pw))) {
-                matchCount++;
-              }
-            });
-            const matchRatio = matchCount / excelWords.length;
-            if (matchRatio < 0.4) {
-              mismatches.push('صنف غير مسجل / الأصناف غير متطابقة');
-              originalData['itemsDescription'] = excelItemsVal;
-            }
-          }
         }
       }
 
@@ -367,7 +354,7 @@ export default function Dashboard() {
     });
 
     setVerificationResults(newVerificationResults);
-  }, [results, template]);
+  }, [verificationRawResults, verificationTemplate]);
 
   // Drag and drop handlers
   const onDragOver = (e: React.DragEvent) => {
@@ -382,7 +369,11 @@ export default function Dashboard() {
       const files = Array.from(e.dataTransfer.files).filter(f => 
         f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
       );
-      setPdfs(prev => [...prev, ...files]);
+      if (state.mode === AppMode.ANALYSIS) {
+        setAnalysisPdfs(prev => [...prev, ...files]);
+      } else {
+        setVerificationPdfs(prev => [...prev, ...files]);
+      }
     }
   };
 
@@ -391,7 +382,11 @@ export default function Dashboard() {
       const files = Array.from(e.target.files).filter(f => 
         f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
       );
-      setPdfs(prev => [...prev, ...files]);
+      if (state.mode === AppMode.ANALYSIS) {
+        setAnalysisPdfs(prev => [...prev, ...files]);
+      } else {
+        setVerificationPdfs(prev => [...prev, ...files]);
+      }
       e.target.value = '';
     }
   };
@@ -401,7 +396,11 @@ export default function Dashboard() {
       const file = e.target.files[0];
       try {
         const data = await readExcelTemplate(file);
-        setTemplate({ ...data, file, name: file.name });
+        if (state.mode === AppMode.ANALYSIS) {
+          setAnalysisTemplate({ ...data, file, name: file.name });
+        } else {
+          setVerificationTemplate({ ...data, file, name: file.name });
+        }
       } catch (err) {
         alert('حدث خطأ أثناء قراءة القالب. تأكد من أنه ملف Excel صالح.');
       }
@@ -491,9 +490,13 @@ export default function Dashboard() {
           isFinished: false
         } as InvoiceData;
 
-        setResults(prev => [...prev, data]);
+        if (state.mode === AppMode.ANALYSIS) {
+          setAnalysisResults(prev => [...prev, data]);
+        } else {
+          setVerificationRawResults(prev => [...prev, data]);
+        }
       } catch (error: any) {
-        setResults(prev => [...prev, { 
+        const errObj = { 
           fileName: file.name, 
           invoiceNumber: 'خطأ',
           date: '#######',
@@ -509,7 +512,12 @@ export default function Dashboard() {
           status: 'error', 
           error: error.message, 
           id: invoiceId 
-        } as any]);
+        } as any;
+        if (state.mode === AppMode.ANALYSIS) {
+          setAnalysisResults(prev => [...prev, errObj]);
+        } else {
+          setVerificationRawResults(prev => [...prev, errObj]);
+        }
       } finally {
         setState(prev => ({ ...prev, processed: prev.processed + 1 }));
       }
@@ -540,9 +548,11 @@ export default function Dashboard() {
     }
 
     const updatedData = { ...selectedInvoice, ...editData, isFinished: true };
-    setResults(prev => prev.map(item => 
-      item.id === selectedInvoice.id ? { ...item, ...updatedData } : item
-    ));
+    if (state.mode === AppMode.ANALYSIS) {
+      setAnalysisResults(prev => prev.map(item => item.id === selectedInvoice.id ? { ...item, ...updatedData } : item));
+    } else {
+      setVerificationRawResults(prev => prev.map(item => item.id === selectedInvoice.id ? { ...item, ...updatedData } : item));
+    }
     setSelectedInvoice(updatedData);
     setEditData(updatedData);
   };
@@ -558,10 +568,17 @@ export default function Dashboard() {
     if (!selectedInvoice || !selectedInvoice.locations) return;
     const master = selectedInvoice.locations;
     setMasterTemplate(master);
-    setResults(prev => prev.map(res => ({
-      ...res,
-      locations: { ...res.locations, ...master }
-    })));
+    if (state.mode === AppMode.ANALYSIS) {
+      setAnalysisResults(prev => prev.map(res => ({
+        ...res,
+        locations: { ...res.locations, ...master }
+      })));
+    } else {
+      setVerificationRawResults(prev => prev.map(res => ({
+        ...res,
+        locations: { ...res.locations, ...master }
+      })));
+    }
     // Also lock all of them to this template
     const newLocks: Record<string, boolean> = {};
     results.forEach(res => {
@@ -572,12 +589,51 @@ export default function Dashboard() {
   };
 
   const handleClearAll = async () => {
-    if (confirm('هل أنت متأكد من مسح جميع الفواتير والبدء من جديد؟')) {
-      setPdfs([]);
-      setResults([]);
-      setVerificationResults([]);
-      localStorage.removeItem('invoiceResults');
+    if (confirm('هل أنت متأكد من مسح فواتير هذا القسم والبدء من جديد؟')) {
+      if (state.mode === AppMode.ANALYSIS) {
+        setAnalysisPdfs([]);
+        setAnalysisResults([]);
+      } else {
+        setVerificationPdfs([]);
+        setVerificationRawResults([]);
+        setVerificationResults([]);
+      }
       await clearAllImages();
+    }
+  };
+
+  const handleToggleComplete = (id: string | number) => {
+    if (state.mode === AppMode.ANALYSIS) {
+      setAnalysisResults(prev => prev.map(r => r.id === id ? { ...r, isFinished: !r.isFinished } : r));
+    } else {
+      setVerificationRawResults(prev => prev.map(r => r.id === id ? { ...r, isFinished: !r.isFinished } : r));
+    }
+  };
+
+  const handleDelete = (id: string | number) => {
+    if (state.mode === AppMode.ANALYSIS) {
+      setAnalysisResults(prev => prev.filter(r => r.id !== id));
+    } else {
+      setVerificationRawResults(prev => prev.filter(r => r.id !== id));
+    }
+    if (selectedInvoice?.id === id) {
+      setSelectedInvoice(null);
+    }
+  };
+
+  const handleRemoveAllPdfs = () => {
+    if (state.mode === AppMode.ANALYSIS) {
+      setAnalysisPdfs([]);
+    } else {
+      setVerificationPdfs([]);
+    }
+  };
+
+  const handleRemovePdf = (idx: number) => {
+    if (state.mode === AppMode.ANALYSIS) {
+      setAnalysisPdfs(prev => prev.filter((_, i) => i !== idx));
+    } else {
+      setVerificationPdfs(prev => prev.filter((_, i) => i !== idx));
     }
   };
 
@@ -671,14 +727,14 @@ export default function Dashboard() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm bg-accent/5 p-2.5 rounded-lg border border-accent/10">
                   <span className="font-bold text-slate-700 text-xs">{pdfs.length} ملف تم اختياره</span>
-                  <button onClick={() => setPdfs([])} className="text-red-400 hover:text-red-600 text-[10px] font-bold transition-colors">مسح الكل</button>
+                  <button onClick={handleRemoveAllPdfs} className="text-red-400 hover:text-red-600 text-[10px] font-bold transition-colors">مسح الكل</button>
                 </div>
                 <div className="max-h-32 overflow-y-auto border border-slate-100 rounded-lg bg-slate-50/50 p-1.5 space-y-1">
                   {pdfs.map((file, idx) => (
                     <div key={idx} className="flex items-center justify-between text-[11px] text-slate-600 bg-white p-1.5 px-2.5 rounded border border-slate-100">
                       <span className="truncate flex-1 font-medium">{file.name}</span>
                       <button 
-                        onClick={() => setPdfs(prev => prev.filter((_, i) => i !== idx))}
+                        onClick={() => handleRemovePdf(idx)}
                         className="text-slate-300 hover:text-red-500 mr-2 transition-colors"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -842,8 +898,8 @@ export default function Dashboard() {
               openedIds={Array.from(openedIds)}
               lastWorkedOnId={lastWorkedOnId}
               onSelect={setSelectedInvoice}
-              onToggleComplete={(id) => setResults(prev => prev.map(r => r.id === id ? { ...r, isFinished: !r.isFinished } : r))}
-              onDelete={(id) => setResults(prev => prev.filter(r => r.id !== id))}
+              onToggleComplete={handleToggleComplete}
+              onDelete={handleDelete}
               onExport={handleExport}
             />
           </section>
@@ -861,7 +917,7 @@ export default function Dashboard() {
             hoveredField={hoveredField}
             locked={lockedLayouts[selectedInvoice.fileName] || false}
             hasChanges={JSON.stringify(editData) !== JSON.stringify(selectedInvoice)}
-            verificationResult={verificationResults.find(v => v.fileName === selectedInvoice.fileName)}
+            verificationResult={state.mode === AppMode.VERIFICATION ? verificationResults.find(v => v.fileName === selectedInvoice.fileName) : undefined}
             onClose={() => setSelectedInvoice(null)}
             onEdit={setEditData}
             onSave={handleSaveEdit}
