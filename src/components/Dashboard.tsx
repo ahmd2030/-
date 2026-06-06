@@ -12,7 +12,10 @@ import {
   Download,
   XCircle,
   AlertCircle,
-  Clock
+  Clock,
+  SlidersHorizontal,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InvoiceData, ProcessingState, ExcelTemplate, AppMode, VerificationResult, TableTemplate, FIELD_COLORS, FIELD_NAMES } from '@/types';
@@ -75,6 +78,12 @@ export default function Dashboard() {
   const [openedIds, setOpenedIds] = useState<Set<string | number>>(new Set());
   const [lastWorkedOnId, setLastWorkedOnId] = useState<string | number | null>(null);
 
+  // Connection & Rate Limiting States
+  const [customApiKey, setCustomApiKey] = useState<string>('');
+  const [rateLimitEnabled, setRateLimitEnabled] = useState<boolean>(true);
+  const [delayRemaining, setDelayRemaining] = useState<number>(0);
+  const [showApiKey, setShowApiKey] = useState(false);
+
   const [state, setState] = useState<ProcessingState>({
     total: 0,
     processed: 0,
@@ -105,12 +114,16 @@ export default function Dashboard() {
         const savedVerificationRawResults = localStorage.getItem('verificationRawResults');
         const savedOpened = localStorage.getItem('openedInvoiceIds');
         const savedLast = localStorage.getItem('lastWorkedOnId');
+        const savedApiKey = localStorage.getItem('customApiKey');
+        const savedRateLimit = localStorage.getItem('rateLimitEnabled');
 
         if (savedLocks) setLockedLayouts(JSON.parse(savedLocks));
         if (savedTrained) setTrainedLayouts(JSON.parse(savedTrained));
         if (savedMaster) setMasterTemplate(JSON.parse(savedMaster));
         if (savedOpened) setOpenedIds(new Set(JSON.parse(savedOpened)));
         if (savedLast) setLastWorkedOnId(savedLast);
+        if (savedApiKey) setCustomApiKey(savedApiKey);
+        if (savedRateLimit) setRateLimitEnabled(savedRateLimit === 'true');
 
         if (savedAnalysisResults) {
           const parsed = JSON.parse(savedAnalysisResults);
@@ -136,8 +149,10 @@ export default function Dashboard() {
       if (lastWorkedOnId) localStorage.setItem('lastWorkedOnId', String(lastWorkedOnId));
       localStorage.setItem('analysisResults', JSON.stringify(analysisResults));
       localStorage.setItem('verificationRawResults', JSON.stringify(verificationRawResults));
+      localStorage.setItem('customApiKey', customApiKey);
+      localStorage.setItem('rateLimitEnabled', String(rateLimitEnabled));
     }
-  }, [lockedLayouts, trainedLayouts, masterTemplate, analysisResults, verificationRawResults, openedIds, lastWorkedOnId]);
+  }, [lockedLayouts, trainedLayouts, masterTemplate, analysisResults, verificationRawResults, openedIds, lastWorkedOnId, customApiKey, rateLimitEnabled]);
 
   // Preview loading
   useEffect(() => {
@@ -403,8 +418,21 @@ export default function Dashboard() {
     setState(prev => ({ ...prev, total: analysisPdfs.length, processed: 0, isProcessing: true }));
     const knowledge = await getAllKnowledge();
 
+    let fileIndex = 0;
     for (const file of analysisPdfs) {
       if (isAbortedRef.current) break;
+
+      // Rate limit delay (15 requests per minute -> 4 seconds delay between calls)
+      if (rateLimitEnabled && fileIndex > 0) {
+        for (let s = 4; s > 0; s--) {
+          if (isAbortedRef.current) break;
+          setDelayRemaining(s);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        setDelayRemaining(0);
+        if (isAbortedRef.current) break;
+      }
+
       setCurrentFileName(file.name);
       const invoiceId = Date.now() + Math.random();
       
@@ -427,7 +455,14 @@ export default function Dashboard() {
           console.warn("Failed to generate AI image", e);
         }
 
-        const extracted = await analyzeInvoiceAction(text, imgForAI, analysisTemplate?.headers || [], masterTemplate || undefined, knowledge);
+        const extracted = await analyzeInvoiceAction(
+          text, 
+          imgForAI, 
+          analysisTemplate?.headers || [], 
+          masterTemplate || undefined, 
+          knowledge,
+          customApiKey
+        );
         
         if (!extracted || extracted.error) {
           throw new Error(extracted?.error || "فشل في استخراج البيانات");
@@ -484,6 +519,7 @@ export default function Dashboard() {
         } as any]);
       } finally {
         setState(prev => ({ ...prev, processed: prev.processed + 1 }));
+        fileIndex++;
       }
     }
     setState(prev => ({ ...prev, isProcessing: false }));
@@ -531,8 +567,21 @@ export default function Dashboard() {
     setState(prev => ({ ...prev, total: verificationPdfs.length, processed: 0, isProcessing: true }));
     const knowledge = await getAllKnowledge();
 
+    let fileIndex = 0;
     for (const file of verificationPdfs) {
       if (isAbortedRef.current) break;
+
+      // Rate limit delay (15 requests per minute -> 4 seconds delay between calls)
+      if (rateLimitEnabled && fileIndex > 0) {
+        for (let s = 4; s > 0; s--) {
+          if (isAbortedRef.current) break;
+          setDelayRemaining(s);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        setDelayRemaining(0);
+        if (isAbortedRef.current) break;
+      }
+
       setCurrentFileName(file.name);
       const invoiceId = Date.now() + Math.random();
       
@@ -555,7 +604,14 @@ export default function Dashboard() {
           console.warn("Failed to generate AI image", e);
         }
 
-        const extracted = await analyzeInvoiceAction(text, imgForAI, verificationTemplate?.headers || [], masterTemplate || undefined, knowledge);
+        const extracted = await analyzeInvoiceAction(
+          text, 
+          imgForAI, 
+          verificationTemplate?.headers || [], 
+          masterTemplate || undefined, 
+          knowledge,
+          customApiKey
+        );
         
         if (!extracted || extracted.error) {
           throw new Error(extracted?.error || "فشل في استخراج البيانات");
@@ -612,6 +668,7 @@ export default function Dashboard() {
         } as any]);
       } finally {
         setState(prev => ({ ...prev, processed: prev.processed + 1 }));
+        fileIndex++;
       }
     }
     setState(prev => ({ ...prev, isProcessing: false }));
@@ -707,6 +764,56 @@ export default function Dashboard() {
     alert('تم تطبيق تنسيق المواقع على جميع الفواتير المحملة بنجاح!');
   };
 
+  const renderSettingsCard = () => {
+    return (
+      <section className="card-premium p-5 space-y-4 bg-slate-50/50 border border-slate-200/50">
+        <h2 className="font-bold text-xs flex items-center gap-2 text-slate-700">
+          <SlidersHorizontal className="w-4 h-4 text-orange-500" />
+          إعدادات الاتصال والسرعة (API)
+        </h2>
+        <div className="space-y-3">
+          {/* API Key Input */}
+          <div>
+            <label className="block text-[10px] font-bold text-slate-500 mb-1">مفتاح API الخاص بـ Gemini:</label>
+            <div className="relative">
+              <input 
+                type={showApiKey ? "text" : "password"} 
+                value={customApiKey}
+                onChange={(e) => setCustomApiKey(e.target.value)}
+                placeholder="استخدام المفتاح الافتراضي للمضيف (.env)"
+                className="w-full text-xs p-2.5 pl-8 rounded-xl border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:border-orange-400"
+              />
+              <button 
+                type="button"
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="absolute left-2.5 top-2.5 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Rate Limiting Toggle */}
+          <div className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-100">
+            <div className="flex flex-col text-right">
+              <span className="text-[11px] font-bold text-slate-700">وضع الحماية (15 فاتورة / دقيقة)</span>
+              <span className="text-[9px] text-slate-400 font-medium">تأخير 4 ثوانٍ تلقائياً لتفادي حظر الحصص المجانية</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={rateLimitEnabled}
+                onChange={(e) => setRateLimitEnabled(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+            </label>
+          </div>
+        </div>
+      </section>
+    );
+  };
+
   // =========================================================================
   // 5. JSX RENDER BLOCK
   // =========================================================================
@@ -770,6 +877,9 @@ export default function Dashboard() {
                   مطابقة وتدقيق
                 </button>
               </div>
+
+              {/* General API & Rate limit Settings */}
+              {renderSettingsCard()}
 
               {/* Upload Panel A */}
               <section className="card-premium p-6 space-y-5">
@@ -865,8 +975,12 @@ export default function Dashboard() {
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-primary text-white p-5 rounded-2xl shadow-xl space-y-4">
                     <div className="flex justify-between items-center">
                       <div>
-                        <h3 className="font-bold text-sm">جاري تحليل واستخراج الفواتير...</h3>
-                        <p className="text-[10px] text-white/60 truncate max-w-[180px] mt-0.5">{currentFileName || 'بدء...'}</p>
+                        <h3 className="font-bold text-sm">
+                          {delayRemaining > 0 ? "انتظار لتفادي حد الاستهلاك..." : "جاري تحليل واستخراج الفواتير..."}
+                        </h3>
+                        <p className="text-[10px] text-white/60 truncate max-w-[180px] mt-0.5">
+                          {delayRemaining > 0 ? `التحليل التالي يبدأ خلال ${delayRemaining} ثانية...` : (currentFileName || 'بدء...')}
+                        </p>
                       </div>
                       <span className="text-2xl font-black">{Math.round((state.processed / state.total) * 100)}%</span>
                     </div>
@@ -957,6 +1071,9 @@ export default function Dashboard() {
                   مطابقة وتدقيق
                 </button>
               </div>
+
+              {/* General API & Rate limit Settings */}
+              {renderSettingsCard()}
 
               {/* Upload Panel B */}
               <section className="card-premium p-6 space-y-5">
@@ -1052,8 +1169,12 @@ export default function Dashboard() {
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-primary text-white p-5 rounded-2xl shadow-xl space-y-4">
                     <div className="flex justify-between items-center">
                       <div>
-                        <h3 className="font-bold text-sm">جاري مطابقة وتدقيق الفواتير...</h3>
-                        <p className="text-[10px] text-white/60 truncate max-w-[180px] mt-0.5">{currentFileName || 'بدء...'}</p>
+                        <h3 className="font-bold text-sm">
+                          {delayRemaining > 0 ? "انتظار لتفادي حد الاستهلاك..." : "جاري مطابقة وتدقيق الفواتير..."}
+                        </h3>
+                        <p className="text-[10px] text-white/60 truncate max-w-[180px] mt-0.5">
+                          {delayRemaining > 0 ? `المطابقة التالية تبدأ خلال ${delayRemaining} ثانية...` : (currentFileName || 'بدء...')}
+                        </p>
                       </div>
                       <span className="text-2xl font-black">{Math.round((state.processed / state.total) * 100)}%</span>
                     </div>

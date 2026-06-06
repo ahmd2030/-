@@ -3,9 +3,8 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { InvoiceData } from "@/types";
 
-// Clean the API key to remove any accidental invisible/Arabic characters pasted from Vercel
-const cleanApiKey = (process.env.GEMINI_API_KEY || "").replace(/[^\x20-\x7E]/g, '');
-const genAI = new GoogleGenerativeAI(cleanApiKey);
+// Clean the API key dynamically at runtime inside the server action to support overrides.
+
 
 const INVOICE_SCHEMA = {
   type: SchemaType.OBJECT,
@@ -44,9 +43,19 @@ export async function analyzeInvoiceAction(
   base64Image?: string,
   extraFields: string[] = [],
   hintLocations?: Record<string, number[]>,
-  knowledge?: Record<string, string[]> // Past corrections
+  knowledge?: Record<string, string[]>, // Past corrections
+  customApiKey?: string
 ): Promise<Partial<InvoiceData> & { error?: string }> {
   
+  const rawKey = customApiKey || process.env.GEMINI_API_KEY || "";
+  const apiKey = rawKey.replace(/[^\x20-\x7E]/g, '').trim();
+
+  if (!apiKey) {
+    return { error: "مفتاح API الخاص بـ Gemini (GEMINI_API_KEY) غير متاح. يرجى تهيئة مفتاح API في الإعدادات أو ملف .env للبدء." };
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+
   const dynamicProps: any = { ...INVOICE_SCHEMA.properties };
   extraFields.forEach(field => {
     if (field && !dynamicProps[field]) {
@@ -69,7 +78,7 @@ export async function analyzeInvoiceAction(
     
     ${hintSnippet}
     ${knowledgeSnippet}
-
+    
     قواعد التصنيف الهامة:
     1. حقل "branch" (الفرع/المنطقة): هذا الحقل يجب أن يستخرج حصراً من سطر وصف السيارة إذا وجد فاصل (/) أو من خانة الموقع داخل الجدول.
     2. حقل "carType" (نوع السيارة): استخرج اسم وموديل السيارة فقط.
@@ -94,7 +103,7 @@ export async function analyzeInvoiceAction(
 
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash",
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -107,11 +116,11 @@ export async function analyzeInvoiceAction(
     const result = await model.generateContent(parts);
     const response = await result.response;
     const rawText = response.text() || "{}";
-    console.log("Gemini 2.5-flash raw response:", rawText.substring(0, 200));
+    console.log("Gemini 2.0-flash raw response:", rawText.substring(0, 200));
     const parsed = JSON.parse(rawText);
     return parsed;
   } catch (firstError: any) {
-    console.warn("Gemini 2.5-flash failed, attempting automatic fallback to gemini-1.5-flash...", firstError?.message || firstError);
+    console.warn("Gemini 2.0-flash failed, attempting automatic fallback to gemini-1.5-flash...", firstError?.message || firstError);
     try {
       const fallbackModel = genAI.getGenerativeModel({
         model: "gemini-1.5-flash",
