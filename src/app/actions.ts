@@ -15,7 +15,11 @@ const INVOICE_SCHEMA = {
     count: { type: SchemaType.STRING, description: "العدد أو العداد المعروض في الفاتورة" },
     carType: { type: SchemaType.STRING, description: "نوع السيارة أو موديلها" },
     branch: { type: SchemaType.STRING, description: "اسم المنطقة أو الفرع (مثل الدمام، جدة، الخبر، الرياض، الخ)" },
-    itemsDescription: { type: SchemaType.STRING, description: "وصف موجز للأصناف المباعة أو الخدمات المقدمة" },
+    itemsDescription: { 
+      type: SchemaType.ARRAY, 
+      items: { type: SchemaType.STRING },
+      description: "قائمة الأصناف المباعة، كل صنف في عنصر منفصل بصيغة: 'الكمية - اسم الصنف'" 
+    },
     subTotal: { type: SchemaType.NUMBER, description: "المبلغ الإجمالي قبل الضريبة" },
     taxAmount: { type: SchemaType.NUMBER, description: "مبلغ الضريبة (VAT)" },
     totalAmount: { type: SchemaType.NUMBER, description: "المبلغ الإجمالي النهائي شامل الضريبة" },
@@ -118,6 +122,9 @@ export async function analyzeInvoiceAction(
     const rawText = response.text() || "{}";
     console.log("Gemini 2.5-flash raw response:", rawText.substring(0, 200));
     const parsed = JSON.parse(rawText);
+    if (Array.isArray(parsed.itemsDescription)) {
+      parsed.itemsDescription = parsed.itemsDescription.join('\n');
+    }
     return parsed;
   } catch (firstError: any) {
     console.warn("Gemini 2.5-flash failed, attempting automatic fallback to gemini-3.5-flash...", firstError?.message || firstError);
@@ -137,6 +144,9 @@ export async function analyzeInvoiceAction(
       const rawText = response.text() || "{}";
       console.log("Gemini 3.5-flash fallback raw response:", rawText.substring(0, 200));
       const parsed = JSON.parse(rawText);
+      if (Array.isArray(parsed.itemsDescription)) {
+        parsed.itemsDescription = parsed.itemsDescription.join('\n');
+      }
       return parsed;
     } catch (secondError: any) {
       console.error("Gemini 3.5-flash fallback also failed:", secondError?.message || secondError);
