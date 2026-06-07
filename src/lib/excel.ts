@@ -60,12 +60,10 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
         if (!raw || raw === placeholder || raw === '') {
           row[h] = placeholder;
         } else {
-          // Clean up and ensure 1-, 2-, 3- format if it's a list
+          // The AI now returns "Quantity - Item Name", so we preserve it and just add RLM for RTL rendering
           const lines = String(raw).split(/\n|;/).filter((l: string) => l.trim() !== '');
-          const formatted = lines.map((line: string, i: number) => {
-            const clean = line.replace(/^\d+[-.)\s]*/, '').trim();
-            // Use RLM (\u200F) to ensure the number and dash stay on the right (start of line in RTL)
-            return `\u200F${i + 1}- ${clean}`;
+          const formatted = lines.map((line: string) => {
+            return `\u200F${line.trim()}`;
           }).join('\n');
           row[h] = formatted || placeholder;
         }
