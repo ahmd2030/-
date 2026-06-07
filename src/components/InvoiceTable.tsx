@@ -242,7 +242,18 @@ export default function InvoiceTable({
                       </div>
                     </td>
                     <td className="p-3 text-xs font-medium text-slate-600 whitespace-nowrap">{res.date}</td>
-                    <td className="p-3 text-xs font-black text-accent whitespace-nowrap">{res.invoiceNumber}</td>
+                    <td className="p-3 text-xs font-black whitespace-nowrap">
+                      {res.status === 'error' ? (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-red-500">{res.invoiceNumber}</span>
+                          <span className="text-[10px] text-red-400 font-normal max-w-[200px] whitespace-normal leading-tight">
+                            {res.error || 'حدث خطأ غير معروف'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-accent">{res.invoiceNumber}</span>
+                      )}
+                    </td>
                     <td className="p-3 text-xs font-bold text-amber-700 whitespace-nowrap">{res.plateNumber}</td>
                     <td className="p-3 text-xs text-slate-500 whitespace-nowrap">{res.count}</td>
                     <td className="p-3 text-xs font-medium text-slate-700 max-w-[180px] truncate">{res.carType}</td>
