@@ -103,7 +103,7 @@ export async function analyzeInvoiceAction(
 
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -116,14 +116,14 @@ export async function analyzeInvoiceAction(
     const result = await model.generateContent(parts);
     const response = await result.response;
     const rawText = response.text() || "{}";
-    console.log("Gemini 2.0-flash raw response:", rawText.substring(0, 200));
+    console.log("Gemini 2.5-flash raw response:", rawText.substring(0, 200));
     const parsed = JSON.parse(rawText);
     return parsed;
   } catch (firstError: any) {
-    console.warn("Gemini 2.0-flash failed, attempting automatic fallback to gemini-1.5-flash...", firstError?.message || firstError);
+    console.warn("Gemini 2.5-flash failed, attempting automatic fallback to gemini-3.5-flash...", firstError?.message || firstError);
     try {
       const fallbackModel = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-3.5-flash",
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -135,11 +135,11 @@ export async function analyzeInvoiceAction(
       const result = await fallbackModel.generateContent(parts);
       const response = await result.response;
       const rawText = response.text() || "{}";
-      console.log("Gemini 1.5-flash fallback raw response:", rawText.substring(0, 200));
+      console.log("Gemini 3.5-flash fallback raw response:", rawText.substring(0, 200));
       const parsed = JSON.parse(rawText);
       return parsed;
     } catch (secondError: any) {
-      console.error("Gemini 1.5-flash fallback also failed:", secondError?.message || secondError);
+      console.error("Gemini 3.5-flash fallback also failed:", secondError?.message || secondError);
       console.error("Full error:", JSON.stringify(secondError, null, 2));
       return { error: `فشل في تحليل الفاتورة: ${secondError?.message || 'خطأ غير معروف'}` };
     }
