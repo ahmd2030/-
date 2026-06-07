@@ -55,16 +55,20 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
       else if (h === 'العدد' || h.includes('count') || h.includes('عداد')) row[h] = item.count || '';
       else if (h === 'نوع السيارة' || h.includes('car')) row[h] = item.carType || placeholder;
       else if (h === 'الفرع' || h.includes('branch')) row[h] = item.branch || placeholder;
-      else if (h.replace(/أ/g, 'ا') === 'اسم الاصناف' || h.includes('item') || h.includes('صنف') || h.includes('اصناف')) {
-        const raw = item.itemsDescription || (item as any)[h] || placeholder;
-        // Clean up and ensure 1-, 2-, 3- format if it's a list
-        const lines = raw.split(/\n|;/).filter((l: string) => l.trim() !== '');
-        const formatted = lines.map((line: string, i: number) => {
-          const clean = line.replace(/^\d+[-.)\s]*/, '').trim();
-          // Use RLM (\u200F) to ensure the number and dash stay on the right (start of line in RTL)
-          return `\u200F${i + 1}- ${clean}`;
-        }).join('\n');
-        row[h] = formatted || placeholder;
+      else if (h.includes('الأصناف') || h.includes('أصناف') || h.includes('صناف') || h.includes('صنف') || h.includes('item')) {
+        const raw = item.itemsDescription || (item as any)[h] || '';
+        if (!raw || raw === placeholder || raw === '') {
+          row[h] = placeholder;
+        } else {
+          // Clean up and ensure 1-, 2-, 3- format if it's a list
+          const lines = String(raw).split(/\n|;/).filter((l: string) => l.trim() !== '');
+          const formatted = lines.map((line: string, i: number) => {
+            const clean = line.replace(/^\d+[-.)\s]*/, '').trim();
+            // Use RLM (\u200F) to ensure the number and dash stay on the right (start of line in RTL)
+            return `\u200F${i + 1}- ${clean}`;
+          }).join('\n');
+          row[h] = formatted || placeholder;
+        }
       }
       else if (h === 'الإجمالي' || h === 'subtotal') row[h] = item.subTotal || placeholder;
       else if (h === 'الضريبة' || h.includes('tax')) row[h] = item.taxAmount || placeholder;
