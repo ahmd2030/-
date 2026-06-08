@@ -28,6 +28,7 @@ interface InvoiceTableProps {
   onSelect: (invoice: InvoiceData) => void;
   onToggleComplete: (id: string | number) => void;
   onDelete: (id: string | number) => void;
+  onDeleteAll?: () => void;
   onExport: () => void;
 }
 
@@ -41,6 +42,7 @@ export default function InvoiceTable({
   onSelect,
   onToggleComplete,
   onDelete,
+  onDeleteAll,
   onExport
 }: InvoiceTableProps) {
   
@@ -65,10 +67,19 @@ export default function InvoiceTable({
           {results.length > 0 && (
             <button 
               onClick={onExport}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-lg text-xs font-bold hover:bg-accent hover:text-white transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-lg text-sm font-bold hover:bg-accent hover:text-white transition-all"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-4 h-4" />
               تصدير Excel
+            </button>
+          )}
+          {results.length > 0 && onDeleteAll && (
+            <button 
+              onClick={onDeleteAll}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-sm font-bold hover:bg-red-600 hover:text-white transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+              حذف الكل
             </button>
           )}
         </div>
@@ -89,12 +100,12 @@ export default function InvoiceTable({
             <table className="w-full text-right">
               <thead className="bg-slate-50/80 backdrop-blur sticky top-0 z-10 border-b border-slate-100">
                 <tr>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 w-12 text-slate-400">م</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">اسم الملف</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">رقم الفاتورة</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">حالة المطابقة</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">الفروقات</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider text-slate-400 w-16">عرض</th>
+                  <th className="p-3 text-xs font-black uppercase tracking-wider border-l border-slate-100 w-12 text-slate-400">م</th>
+                  <th className="p-3 text-xs font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">اسم الملف</th>
+                  <th className="p-3 text-xs font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">رقم الفاتورة</th>
+                  <th className="p-3 text-xs font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">حالة المطابقة</th>
+                  <th className="p-3 text-xs font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">الفروقات</th>
+                  <th className="p-3 text-xs font-black uppercase tracking-wider text-slate-400 w-16">عرض</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -194,14 +205,14 @@ export default function InvoiceTable({
             <table className="w-full text-right">
               <thead className="bg-slate-50/80 backdrop-blur sticky top-0 z-10 border-b border-slate-100">
                 <tr>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 w-16 text-slate-400">م</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">التاريخ</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">رقم الفاتورة</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">اللوحة</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">العداد</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">نوع السيارة</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">الإجمالي</th>
-                  <th className="p-3 text-[10px] font-black uppercase tracking-wider text-slate-400 w-20">إجراءات</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 w-16 text-slate-400">م</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">التاريخ</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">رقم الفاتورة</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">اللوحة</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">العداد</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">نوع السيارة</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">الإجمالي</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider text-slate-400 w-20">إجراءات</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -226,13 +237,13 @@ export default function InvoiceTable({
                         <button 
                           onClick={(e) => { e.stopPropagation(); res.id && onToggleComplete(res.id); }}
                           className={cn(
-                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0",
+                            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0",
                             res.isFinished ? "bg-green-500 border-green-500 text-white" : "border-slate-200 hover:border-accent"
                           )}
                         >
                           {res.isFinished && <CheckCircle2 className="w-3 h-3" />}
                         </button>
-                        <span className="text-xs font-bold text-slate-400">{idx + 1}</span>
+                        <span className="text-sm font-bold text-slate-400">{idx + 1}</span>
                         {lastWorkedOnId === res.id && (
                           <span className="bg-orange-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse whitespace-nowrap">آخر عمل</span>
                         )}
@@ -241,12 +252,12 @@ export default function InvoiceTable({
                         )}
                       </div>
                     </td>
-                    <td className="p-3 text-xs font-medium text-slate-600 whitespace-nowrap">{res.date}</td>
-                    <td className="p-3 text-xs font-black whitespace-nowrap">
+                    <td className="p-3 text-sm font-medium text-slate-600 whitespace-nowrap">{res.date}</td>
+                    <td className="p-3 text-sm font-black whitespace-nowrap">
                       {res.status === 'error' ? (
                         <div className="flex flex-col gap-1">
                           <span className="text-red-500">{res.invoiceNumber}</span>
-                          <span className="text-[10px] text-red-400 font-normal max-w-[200px] whitespace-normal leading-tight">
+                          <span className="text-xs text-red-400 font-normal max-w-[200px] whitespace-normal leading-tight">
                             {res.error || 'حدث خطأ غير معروف'}
                           </span>
                         </div>
@@ -254,27 +265,27 @@ export default function InvoiceTable({
                         <span className="text-accent">{res.invoiceNumber}</span>
                       )}
                     </td>
-                    <td className="p-3 text-xs font-bold text-amber-700 whitespace-nowrap">{res.plateNumber}</td>
-                    <td className="p-3 text-xs text-slate-500 whitespace-nowrap">{res.count}</td>
-                    <td className="p-3 text-xs font-medium text-slate-700 max-w-[180px] truncate">{res.carType}</td>
-                    <td className="p-3 text-xs font-black text-slate-900 whitespace-nowrap">
+                    <td className="p-3 text-sm font-bold text-amber-700 whitespace-nowrap">{res.plateNumber}</td>
+                    <td className="p-3 text-sm text-slate-500 whitespace-nowrap">{res.count}</td>
+                    <td className="p-3 text-sm font-medium text-slate-700 max-w-[180px] truncate">{res.carType}</td>
+                    <td className="p-3 text-sm font-black text-slate-900 whitespace-nowrap">
                       {res.totalAmount ? `${Number(res.totalAmount).toLocaleString()} ر.س` : '-'}
                     </td>
                     <td className="p-3">
                       <div className="flex items-center gap-1 justify-center">
                         <button 
                           onClick={(e) => { e.stopPropagation(); onSelect(res); }}
-                          className="p-1.5 rounded-lg text-slate-300 hover:text-accent hover:bg-white transition-all"
+                          className="p-2 rounded-lg text-slate-400 hover:text-accent hover:bg-white transition-all"
                           title="عرض التفاصيل"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-5 h-5" />
                         </button>
                         <button 
                           onClick={(e) => { e.stopPropagation(); res.id && onDelete(res.id); }}
-                          className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-white transition-all"
+                          className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
                           title="حذف"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
                     </td>

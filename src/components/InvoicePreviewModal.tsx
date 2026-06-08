@@ -13,6 +13,7 @@ import {
   FileText,
   Printer,
   ChevronRight,
+  ChevronLeft,
   AlertCircle,
   Loader2,
   CheckCircle2,
@@ -49,6 +50,10 @@ interface InvoicePreviewModalProps {
   onSaveLayout: () => void;
   onApplyLayoutToAll: () => void;
   setHoveredField: (field: string | null) => void;
+  onNext?: () => void;
+  onPrev?: () => void;
+  hasNext?: boolean;
+  hasPrev?: boolean;
 }
 
 export default function InvoicePreviewModal({
@@ -66,7 +71,11 @@ export default function InvoicePreviewModal({
   onUpdateLocation,
   onSaveLayout,
   onApplyLayoutToAll,
-  setHoveredField
+  setHoveredField,
+  onNext,
+  onPrev,
+  hasNext,
+  hasPrev
 }: InvoicePreviewModalProps) {
   
   const [isTrainingMode, setIsTrainingMode] = useState(false);
@@ -386,6 +395,24 @@ export default function InvoicePreviewModal({
               <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </button>
           </div>
+
+          {/* Next/Prev Navigation */}
+          {hasPrev && (
+            <button 
+              onClick={onPrev}
+              className="absolute left-10 top-1/2 -translate-y-1/2 z-40 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all shadow-[0_0_40px_rgba(255,255,255,0.1)] border border-white/10 group"
+            >
+              <ChevronLeft className="w-10 h-10 group-hover:-translate-x-1 transition-transform" />
+            </button>
+          )}
+          {hasNext && (
+            <button 
+              onClick={onNext}
+              className="absolute right-10 top-1/2 -translate-y-1/2 z-40 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all shadow-[0_0_40px_rgba(255,255,255,0.1)] border border-white/10 group"
+            >
+              <ChevronRight className="w-10 h-10 group-hover:translate-x-1 transition-transform" />
+            </button>
+          )}
 
           {/* Scrollable Container */}
           <div 

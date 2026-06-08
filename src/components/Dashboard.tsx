@@ -708,6 +708,16 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteAll = () => {
+    if (confirm('هل أنت متأكد من رغبتك في حذف جميع الفواتير؟ لا يمكن التراجع عن هذا الإجراء.')) {
+      if (state.mode === AppMode.ANALYSIS) {
+        setAnalysisResults([]);
+      } else {
+        setVerificationRawResults([]);
+      }
+    }
+  };
+
   const handleSaveEdit = async () => {
     if (!editData || !selectedInvoice) return;
     
@@ -730,8 +740,39 @@ export default function Dashboard() {
     } else {
       setVerificationRawResults(prev => prev.map(item => item.id === selectedInvoice.id ? { ...item, ...updatedData } : item));
     }
-    setSelectedInvoice(updatedData);
-    setEditData(updatedData);
+    
+    // Auto advance
+    const results = state.mode === AppMode.ANALYSIS ? analysisResults : verificationRawResults;
+    const currentIndex = results.findIndex(r => r.id === selectedInvoice.id);
+    if (currentIndex >= 0 && currentIndex < results.length - 1) {
+      const nextInvoice = results[currentIndex + 1];
+      setSelectedInvoice(nextInvoice);
+      setEditData(nextInvoice);
+    } else {
+      setSelectedInvoice(null);
+    }
+  };
+
+  const handleNextInvoice = () => {
+    if (!selectedInvoice) return;
+    const results = state.mode === AppMode.ANALYSIS ? analysisResults : verificationRawResults;
+    const currentIndex = results.findIndex(r => r.id === selectedInvoice.id);
+    if (currentIndex >= 0 && currentIndex < results.length - 1) {
+      const nextInvoice = results[currentIndex + 1];
+      setSelectedInvoice(nextInvoice);
+      setEditData(nextInvoice);
+    }
+  };
+
+  const handlePrevInvoice = () => {
+    if (!selectedInvoice) return;
+    const results = state.mode === AppMode.ANALYSIS ? analysisResults : verificationRawResults;
+    const currentIndex = results.findIndex(r => r.id === selectedInvoice.id);
+    if (currentIndex > 0) {
+      const prevInvoice = results[currentIndex - 1];
+      setSelectedInvoice(prevInvoice);
+      setEditData(prevInvoice);
+    }
   };
 
   const handleSaveLayout = () => {
@@ -1042,6 +1083,7 @@ export default function Dashboard() {
                   onSelect={setSelectedInvoice}
                   onToggleComplete={handleToggleComplete}
                   onDelete={handleDelete}
+                  onDeleteAll={handleDeleteAll}
                   onExport={handleAnalysisExport}
                 />
               </section>
@@ -1236,6 +1278,7 @@ export default function Dashboard() {
                   onSelect={setSelectedInvoice}
                   onToggleComplete={handleToggleComplete}
                   onDelete={handleDelete}
+                  onDeleteAll={handleDeleteAll}
                   onExport={handleVerificationExport}
                 />
               </section>
@@ -1263,6 +1306,16 @@ export default function Dashboard() {
             onSaveLayout={handleSaveLayout}
             onApplyLayoutToAll={handleApplyLayoutToAll}
             setHoveredField={setHoveredField}
+            onNext={handleNextInvoice}
+            onPrev={handlePrevInvoice}
+            hasNext={
+              (state.mode === AppMode.ANALYSIS ? analysisResults : verificationRawResults)
+                .findIndex(r => r.id === selectedInvoice.id) < (state.mode === AppMode.ANALYSIS ? analysisResults.length - 1 : verificationRawResults.length - 1)
+            }
+            hasPrev={
+              (state.mode === AppMode.ANALYSIS ? analysisResults : verificationRawResults)
+                .findIndex(r => r.id === selectedInvoice.id) > 0
+            }
           />
         )}
       </AnimatePresence>
