@@ -718,6 +718,87 @@ export default function Dashboard() {
     }
   };
 
+  const handleRetryInvoice = async (id: string | number) => {
+    const isAnalysis = state.mode === AppMode.ANALYSIS;
+    const targetResults = isAnalysis ? analysisResults : verificationRawResults;
+    const invoiceIndex = targetResults.findIndex(r => r.id === id);
+    if (invoiceIndex === -1) return;
+    
+    const invoice = targetResults[invoiceIndex];
+    if (!invoice.originalFile) {
+      alert('عذراً، الملف الأصلي غير متوفر لإعادة القراءة.');
+      return;
+    }
+
+    const setResults = isAnalysis ? setAnalysisResults : setVerificationRawResults;
+    setResults(prev => prev.map(r => r.id === id ? { ...r, status: 'processing', error: undefined } : r));
+    
+    try {
+      const text = await extractTextFromPdf(invoice.originalFile);
+      let imgForAI: string | undefined = undefined;
+      try {
+        imgForAI = await pdfToImage(invoice.originalFile, 1.2, 0.6);
+      } catch (e) {
+        console.warn("Failed to generate AI image", e);
+      }
+
+      const { getAllKnowledge } = await import('@/lib/db');
+      const knowledge = await getAllKnowledge();
+      const extracted = await analyzeInvoiceAction(
+        text, 
+        imgForAI, 
+        isAnalysis ? (analysisTemplate?.headers || []) : (verificationTemplate?.headers || []), 
+        masterTemplate || undefined, 
+        knowledge,
+        customApiKey
+      );
+      
+      if (!extracted || extracted.error) {
+        throw new Error(extracted?.error || "فشل في استخراج البيانات");
+      }
+
+      let carTypeBase = (extracted.carType && extracted.carType !== '#######') ? extracted.carType : '#######';
+      let branchInfo = (extracted.branch && extracted.branch !== '#######') ? extracted.branch : '';
+
+      if (branchInfo === '' || branchInfo === '#######') {
+        const separators = [' - ', ' / ', '-', '/'];
+        for (const sep of separators) {
+          if (carTypeBase.includes(sep)) {
+            const parts = carTypeBase.split(sep);
+            carTypeBase = parts[0].trim();
+            branchInfo = parts[parts.length - 1].trim();
+            break;
+          }
+        }
+      }
+
+      const newData: InvoiceData = {
+        ...extracted,
+        id: invoice.id,
+        fileName: invoice.fileName,
+        originalFile: invoice.originalFile,
+        invoiceNumber: extracted.invoiceNumber || '#######',
+        date: extracted.date || '#######',
+        plateNumber: extracted.plateNumber || '#######',
+        carType: carTypeBase,
+        branch: branchInfo || '#######',
+        totalAmount: extracted.totalAmount || 0,
+        status: 'completed',
+        isFinished: false,
+        locations: extracted.locations || invoice.locations
+      } as InvoiceData;
+
+      setResults(prev => prev.map(r => r.id === id ? newData : r));
+      if (selectedInvoice?.id === id) {
+        setSelectedInvoice(newData);
+        setEditData(newData);
+      }
+      
+    } catch (error: any) {
+      setResults(prev => prev.map(r => r.id === id ? { ...r, status: 'error', error: error.message } : r));
+    }
+  };
+
   const handleSaveEdit = async () => {
     if (!editData || !selectedInvoice) return;
     
@@ -1084,6 +1165,7 @@ export default function Dashboard() {
                   onToggleComplete={handleToggleComplete}
                   onDelete={handleDelete}
                   onDeleteAll={handleDeleteAll}
+                  onRetry={handleRetryInvoice}
                   onExport={handleAnalysisExport}
                 />
               </section>
@@ -1279,6 +1361,7 @@ export default function Dashboard() {
                   onToggleComplete={handleToggleComplete}
                   onDelete={handleDelete}
                   onDeleteAll={handleDeleteAll}
+                  onRetry={handleRetryInvoice}
                   onExport={handleVerificationExport}
                 />
               </section>

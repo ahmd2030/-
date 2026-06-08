@@ -8,7 +8,9 @@ import {
   Trash2,
   FileText,
   AlertCircle,
-  Download
+  Download,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import { InvoiceData, AppMode, VerificationResult } from '@/types';
 import { clsx, type ClassValue } from 'clsx';
@@ -29,6 +31,7 @@ interface InvoiceTableProps {
   onToggleComplete: (id: string | number) => void;
   onDelete: (id: string | number) => void;
   onDeleteAll?: () => void;
+  onRetry?: (id: string | number) => void;
   onExport: () => void;
 }
 
@@ -43,6 +46,7 @@ export default function InvoiceTable({
   onToggleComplete,
   onDelete,
   onDeleteAll,
+  onRetry,
   onExport
 }: InvoiceTableProps) {
   
@@ -280,6 +284,15 @@ export default function InvoiceTable({
                         >
                           <Eye className="w-5 h-5" />
                         </button>
+                        {onRetry && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); res.id && onRetry(res.id); }}
+                            className="p-2 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all"
+                            title="إعادة القراءة"
+                          >
+                            {res.status === 'processing' ? <Loader2 className="w-5 h-5 animate-spin text-blue-500" /> : <RefreshCw className="w-5 h-5" />}
+                          </button>
+                        )}
                         <button 
                           onClick={(e) => { e.stopPropagation(); res.id && onDelete(res.id); }}
                           className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
@@ -292,7 +305,6 @@ export default function InvoiceTable({
                   </motion.tr>
                 ))}
               </tbody>
-              {/* Summary Footer */}
               {results.length > 0 && (
                 <tfoot className="border-t-2 border-slate-200 bg-slate-50/80">
                   <tr>
