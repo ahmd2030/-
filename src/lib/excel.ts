@@ -42,9 +42,12 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
     'م', 'التاريخ 1', 'رقم الفاتورة', 'اللوحة', 'العداد', 'نوع السيارة',
     'زيت', 'الكمية', 'السعر',
     'فلتر زيت', 'الكمية', 'السعر',
+    'زيت جير', 'الكمية', 'السعر',
+    'زيت دفرنس', 'الكمية', 'السعر',
     'فلتر هواء', 'الكمية', 'السعر',
     'فلتر مكيف', 'الكمية', 'السعر',
     'فلتر ديزل', 'الكمية', 'السعر',
+    'خدمة غيار فلتر ديزل', 'الكمية', 'السعر',
     'كفرات', 'الكمية', 'السعر',
     'مساحة', 'الكمية', 'السعر',
     'بطاريات', 'الكمية', 'السعر',
@@ -98,9 +101,12 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
       // Categories
       else if (h === 'زيت') { currentCategory = 'oil'; row[dedupKey] = item.oilName || placeholder; }
       else if (h === 'فلتر زيت') { currentCategory = 'oilFilter'; row[dedupKey] = item.oilFilterName || placeholder; }
+      else if (h === 'زيت جير') { currentCategory = 'gearOil'; row[dedupKey] = item.gearOilName || placeholder; }
+      else if (h === 'زيت دفرنس') { currentCategory = 'diffOil'; row[dedupKey] = item.diffOilName || placeholder; }
       else if (h === 'فلتر هواء') { currentCategory = 'airFilter'; row[dedupKey] = item.airFilterName || placeholder; }
       else if (h === 'فلتر مكيف') { currentCategory = 'acFilter'; row[dedupKey] = item.acFilterName || placeholder; }
       else if (h === 'فلتر ديزل') { currentCategory = 'dieselFilter'; row[dedupKey] = item.dieselFilterName || placeholder; }
+      else if (h === 'خدمة غيار فلتر ديزل') { currentCategory = 'dieselFilterService'; row[dedupKey] = item.dieselFilterServiceName || placeholder; }
       else if (h === 'كفرات') { currentCategory = 'tires'; row[dedupKey] = item.tiresName || placeholder; }
       else if (h === 'مساحة' || h === 'مساحات') { currentCategory = 'wipers'; row[dedupKey] = item.wipersName || placeholder; }
       else if (h === 'بطاريات') { currentCategory = 'batteries'; row[dedupKey] = item.batteriesName || placeholder; }

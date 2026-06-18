@@ -21,6 +21,12 @@ const INVOICE_SCHEMA = {
     oilFilterName: { type: SchemaType.STRING, description: "اسم فلتر الزيت وكوده" },
     oilFilterQty: { type: SchemaType.STRING, description: "كمية فلتر الزيت" },
     oilFilterPrice: { type: SchemaType.STRING, description: "سعر فلتر الزيت" },
+    gearOilName: { type: SchemaType.STRING, description: "اسم زيت الجير" },
+    gearOilQty: { type: SchemaType.STRING, description: "كمية زيت الجير" },
+    gearOilPrice: { type: SchemaType.STRING, description: "سعر زيت الجير" },
+    diffOilName: { type: SchemaType.STRING, description: "اسم زيت الدفرنس" },
+    diffOilQty: { type: SchemaType.STRING, description: "كمية زيت الدفرنس" },
+    diffOilPrice: { type: SchemaType.STRING, description: "سعر زيت الدفرنس" },
     airFilterName: { type: SchemaType.STRING, description: "اسم فلتر الهواء" },
     airFilterQty: { type: SchemaType.STRING, description: "كمية فلتر الهواء" },
     airFilterPrice: { type: SchemaType.STRING, description: "سعر فلتر الهواء" },
@@ -30,6 +36,9 @@ const INVOICE_SCHEMA = {
     dieselFilterName: { type: SchemaType.STRING, description: "اسم فلتر الديزل" },
     dieselFilterQty: { type: SchemaType.STRING, description: "كمية فلتر الديزل" },
     dieselFilterPrice: { type: SchemaType.STRING, description: "سعر فلتر الديزل" },
+    dieselFilterServiceName: { type: SchemaType.STRING, description: "خدمة غيار فلتر الديزل" },
+    dieselFilterServiceQty: { type: SchemaType.STRING, description: "كمية خدمة غيار فلتر الديزل" },
+    dieselFilterServicePrice: { type: SchemaType.STRING, description: "سعر خدمة غيار فلتر الديزل" },
     tiresName: { type: SchemaType.STRING, description: "وصف أو نوع الكفرات (مثل هانكوك، يوكوهاما)" },
     tiresQty: { type: SchemaType.STRING, description: "كمية الكفرات" },
     tiresPrice: { type: SchemaType.STRING, description: "سعر الكفرات" },
@@ -97,16 +106,19 @@ export async function analyzeInvoiceAction(
     قواعد التصنيف الهامة جداً (الرجاء الالتزام بها حرفياً):
     1. حقل "branch": استخرجه من أعلى الفاتورة (مثل الرياض، الدمام).
     2. حقل "carType": نوع وموديل السيارة فقط.
-    3. الزيوت (oilName, oilQty, oilPrice): أي شيء يحتوي على 15W40, 5W30, زيت, Oil. مثال: "زيت سوبر جي تي".
+    3. الزيوت (oilName, oilQty, oilPrice): زيت الماكينة، أي شيء يحتوي على 15W40, 5W30, زيت, Oil. مثال: "زيت سوبر جي تي".
     4. فلاتر الزيت (oilFilterName, ...): أي فلتر يخص الزيت أو الماكينة (Oil Filter, سيفون).
-    5. فلاتر الهواء (airFilterName, ...): فلتر هواء الماكينة.
-    6. فلاتر المكيف (acFilterName, ...): فلتر مكيف الغمارة.
-    7. فلاتر الديزل (dieselFilterName, ...): صفاية ديزل، فلتر ديزل.
-    8. الكفرات (tiresName, ...): إطارات، كفر، هانكوك، دنلوب، يوكوهاما.
-    9. المساحات (wipersName, ...): مساحة زجاج، ربل مساحة.
-    10. البطاريات (batteriesName, ...): بطارية، اسيديلكو، هانكوك (إذا كتب بجانبها امبير أو بطارية).
-    11. الخدمات (servicesName, ...): أجور يد، شغل يد، تغيير، فحص، صيانة، ميزان.
-    12. قطع الغيار (sparePartsName, ...): أي صنف آخر غير مذكور أعلاه (مثل فحمات، هوبات، قماش، بواجي، سير).
+    5. زيوت الجير (gearOilName, gearOilQty, gearOilPrice): زيت جير، Gear Oil.
+    6. زيوت الدفرنس (diffOilName, diffOilQty, diffOilPrice): زيت دفرنس، Diff Oil.
+    7. فلاتر الهواء (airFilterName, ...): فلتر هواء الماكينة.
+    8. فلاتر المكيف (acFilterName, ...): فلتر مكيف الغمارة.
+    9. فلاتر الديزل (dieselFilterName, ...): صفاية ديزل، فلتر ديزل.
+    10. خدمة غيار فلتر الديزل (dieselFilterServiceName, ...): أجور تغيير صفاية الديزل، خدمة غيار فلتر ديزل.
+    11. الكفرات (tiresName, ...): إطارات، كفر، هانكوك، دنلوب، يوكوهاما.
+    12. المساحات (wipersName, ...): مساحة زجاج، ربل مساحة.
+    13. البطاريات (batteriesName, ...): بطارية، اسيديلكو، هانكوك (إذا كتب بجانبها امبير أو بطارية).
+    14. الخدمات (servicesName, ...): أجور يد، شغل يد، تغيير، فحص، صيانة، ميزان (باستثناء أجور الديزل المذكورة أعلاه).
+    15. قطع الغيار (sparePartsName, ...): أي صنف آخر غير مذكور أعلاه (مثل فحمات، هوبات، قماش، بواجي، سير).
     
     لجميع الأصناف، استخرج الاسم (Name) والكمية (Qty) والسعر الإجمالي للصنف (Price). إذا لم توجد كمية، ضع "1".
     يجب أن تكون النتيجة بتنسيق JSON حصراً.

@@ -819,8 +819,8 @@ export default function Dashboard() {
     
     const fieldsToLearn = [
       'branch', 'carType',
-      'oilName', 'oilFilterName', 'airFilterName', 'acFilterName', 'dieselFilterName',
-      'tiresName', 'wipersName', 'batteriesName', 'servicesName', 'sparePartsName'
+      'oilName', 'oilFilterName', 'gearOilName', 'diffOilName', 'airFilterName', 'acFilterName', 'dieselFilterName',
+      'dieselFilterServiceName', 'tiresName', 'wipersName', 'batteriesName', 'servicesName', 'sparePartsName'
     ];
     for (const field of fieldsToLearn) {
       const oldVal = (selectedInvoice as any)[field];
