@@ -79,10 +79,25 @@ export default function InvoicePreviewModal({
 }: InvoicePreviewModalProps) {
   
   const [isTrainingMode, setIsTrainingMode] = useState(false);
+  const [showNativePdf, setShowNativePdf] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [activeDragField, setActiveDragField] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  const pdfUrl = React.useMemo(() => {
+    if (invoice.originalFile && invoice.originalFile.type === 'application/pdf') {
+      return URL.createObjectURL(invoice.originalFile);
+    }
+    return null;
+  }, [invoice.originalFile]);
+
+  // Cleanup object URL
+  useEffect(() => {
+    return () => {
+      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    };
+  }, [pdfUrl]);
 
   // Helper to extract Excel value for comparison
   const getExcelValueForField = (field: string) => {
@@ -374,6 +389,24 @@ export default function InvoicePreviewModal({
               {isTrainingMode ? 'قفل وحفظ المربعات' : 'تحريك المربعات'}
             </button>
             
+            {invoice.originalFile?.type === 'application/pdf' && (
+              <>
+                <div className="h-10 w-[1px] bg-white/10" />
+                <button 
+                  onClick={() => setShowNativePdf(!showNativePdf)}
+                  className={cn(
+                    "flex items-center gap-4 px-6 py-3 rounded-2xl text-sm font-black transition-all border-2",
+                    showNativePdf 
+                      ? "bg-blue-500 text-white border-blue-400 shadow-[0_0_50px_rgba(59,130,246,0.6)] scale-105" 
+                      : "bg-white/5 text-white border-white/10 hover:bg-white/10"
+                  )}
+                >
+                  <FileText className="w-6 h-6" />
+                  {showNativePdf ? 'العودة للصورة والمربعات' : 'عرض نص PDF للنسخ'}
+                </button>
+              </>
+            )}
+            
             <div className="h-10 w-[1px] bg-white/10" />
             
             <button 
@@ -429,16 +462,16 @@ export default function InvoicePreviewModal({
                 </div>
                 <p className="text-white/30 font-black text-xl tracking-[0.3em] uppercase">جاري القراءة البصرية المتقدمة...</p>
               </div>
-            ) : invoice.originalFile?.type === 'application/pdf' && !isTrainingMode ? (
+            ) : showNativePdf && invoice.originalFile ? (
               <div 
                 className="relative shadow-[0_60px_120px_-30px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden bg-white w-full h-[80vh]"
                 style={{ width: '900px' }}
               >
                 <div className="absolute top-0 left-0 right-0 bg-blue-500 text-white text-center py-2 font-bold z-50 text-sm">
-                  وضع عرض PDF: يمكنك الآن تحديد النص ونسخه بسهولة. للعودة للوضع القديم اضغط على زر تحريك المربعات في الأعلى.
+                  وضع عرض PDF: يمكنك الآن تحديد النص ونسخه بسهولة. للعودة للوضع القديم اضغط على زر العودة للصورة والمربعات في الأعلى.
                 </div>
                 <object 
-                  data={URL.createObjectURL(invoice.originalFile)} 
+                  data={pdfUrl || ''} 
                   type="application/pdf" 
                   width="100%" 
                   height="100%"

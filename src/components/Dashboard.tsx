@@ -1158,6 +1158,7 @@ export default function Dashboard() {
                       )}
                     </div>
                     <button 
+                      type="button"
                       onClick={handleAnalysisExport}
                       disabled={analysisResults.length === 0}
                       className="w-full flex items-center justify-center gap-2 py-3 bg-white font-bold text-sm text-slate-600 rounded-2xl border border-slate-200 hover:border-accent/40 hover:bg-accent/5 hover:text-accent transition-all disabled:opacity-40"
@@ -1354,6 +1355,7 @@ export default function Dashboard() {
                       )}
                     </div>
                     <button 
+                      type="button"
                       onClick={handleVerificationExport}
                       disabled={verificationRawResults.length === 0}
                       className="w-full flex items-center justify-center gap-2 py-3 bg-white font-bold text-sm text-slate-600 rounded-2xl border border-slate-200 hover:border-accent/40 hover:bg-accent/5 hover:text-accent transition-all disabled:opacity-40"

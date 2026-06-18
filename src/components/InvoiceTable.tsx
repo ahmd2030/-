@@ -70,6 +70,7 @@ export default function InvoiceTable({
           )}
           {results.length > 0 && (
             <button 
+              type="button"
               onClick={onExport}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-lg text-sm font-bold hover:bg-accent hover:text-white transition-all"
             >
