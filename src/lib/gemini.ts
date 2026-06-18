@@ -17,25 +17,40 @@ const INVOICE_SCHEMA = {
     count: { type: Type.STRING, description: "العدد أو العداد المعروض في الفاتورة" },
     carType: { type: Type.STRING, description: "نوع السيارة أو موديلها" },
     branch: { type: Type.STRING, description: "اسم المنطقة أو الفرع (مثل الدمام، جدة، الخبر، الرياض، الخ)" },
-    itemsDescription: { type: Type.STRING, description: "وصف موجز للأصناف المباعة أو الخدمات المقدمة" },
+    oilName: { type: Type.STRING, description: "اسم أو نوع الزيت (مثل 15W40، 5W30)" },
+    oilQty: { type: Type.STRING, description: "كمية الزيت" },
+    oilPrice: { type: Type.STRING, description: "سعر الزيت الإجمالي" },
+    oilFilterName: { type: Type.STRING, description: "اسم فلتر الزيت وكوده" },
+    oilFilterQty: { type: Type.STRING, description: "كمية فلتر الزيت" },
+    oilFilterPrice: { type: Type.STRING, description: "سعر فلتر الزيت" },
+    airFilterName: { type: Type.STRING, description: "اسم فلتر الهواء" },
+    airFilterQty: { type: Type.STRING, description: "كمية فلتر الهواء" },
+    airFilterPrice: { type: Type.STRING, description: "سعر فلتر الهواء" },
+    acFilterName: { type: Type.STRING, description: "اسم فلتر المكيف" },
+    acFilterQty: { type: Type.STRING, description: "كمية فلتر المكيف" },
+    acFilterPrice: { type: Type.STRING, description: "سعر فلتر المكيف" },
+    dieselFilterName: { type: Type.STRING, description: "اسم فلتر الديزل" },
+    dieselFilterQty: { type: Type.STRING, description: "كمية فلتر الديزل" },
+    dieselFilterPrice: { type: Type.STRING, description: "سعر فلتر الديزل" },
+    tiresName: { type: Type.STRING, description: "وصف أو نوع الكفرات" },
+    tiresQty: { type: Type.STRING, description: "كمية الكفرات" },
+    tiresPrice: { type: Type.STRING, description: "سعر الكفرات" },
+    wipersName: { type: Type.STRING, description: "وصف المساحات" },
+    wipersQty: { type: Type.STRING, description: "كمية المساحات" },
+    wipersPrice: { type: Type.STRING, description: "سعر المساحات" },
+    batteriesName: { type: Type.STRING, description: "وصف البطاريات" },
+    batteriesQty: { type: Type.STRING, description: "كمية البطاريات" },
+    batteriesPrice: { type: Type.STRING, description: "سعر البطاريات" },
+    servicesName: { type: Type.STRING, description: "وصف الخدمات كأجور اليد أو الصيانة" },
+    servicesQty: { type: Type.STRING, description: "كمية الخدمات" },
+    servicesPrice: { type: Type.STRING, description: "سعر الخدمات" },
+    sparePartsName: { type: Type.STRING, description: "وصف قطع الغيار الأخرى غير الفلاتر والزيوت" },
+    sparePartsQty: { type: Type.STRING, description: "كمية قطع الغيار" },
+    sparePartsPrice: { type: Type.STRING, description: "سعر قطع الغيار" },
     subTotal: { type: Type.NUMBER, description: "المبلغ الإجمالي قبل الضريبة" },
     taxAmount: { type: Type.NUMBER, description: "مبلغ الضريبة (VAT)" },
     totalAmount: { type: Type.NUMBER, description: "المبلغ الإجمالي النهائي شامل الضريبة" },
-    notes: { type: Type.STRING, description: "أي ملاحظات إضافية هامة" },
-    locations: {
-      type: Type.OBJECT,
-      description: "إحداثيات المربعات المحيطة لكل حقل كـ [ymin, xmin, ymax, xmax] (قيم بين 0-1000)",
-      properties: {
-        invoiceNumber: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "[ymin, xmin, ymax, xmax]" },
-        date: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        plateNumber: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        count: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        carType: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        branch: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        itemsDescription: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-        totalAmount: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-      }
-    }
+    notes: { type: Type.STRING, description: "أي ملاحظات إضافية هامة" }
   },
   required: ["invoiceNumber", "date", "totalAmount"],
 };
@@ -73,31 +88,18 @@ export async function analyzeInvoice(
     3. حقل "plateNumber" (رقم اللوحة): هذا الحقل فائق الحساسية. في اللوحات السعودية، تظهر الحروف أولاً من جهة اليمين ثم الأرقام. 
        - القاعدة الذهبية: استخرج الحروف بالترتيب الذي تراه عيناك من اليمين إلى اليسار (مثال: إذا رأيت "أ ل ب" سجلها "أ ل ب").
        - "تحذير": لا تقم بعكس الحروف. إذا كانت اللوحة "أ ل ب 123" لا تسجلها "ب ل أ 123". التزم بالترتيب البصري الذي تراه عيناك من اليمين.
-    4. حقل "itemsDescription" (وصف الأصناف): استخرج الأصناف على شكل "قائمة مرقمة" (1-, 2-, 3-...) حيث يكون كل صنف في سطر مستقل (باستخدام سطر جديد \n) داخل نفس الخانة.
-       - "مثال للتنسيق المطلوب":
-         1- زيت نكسون 15w40 2
-         2- فلتر زيت JMC CA6714 3
-         3- فلتر هواء JMC E9P2 4
-       - "قاعدة الأكواد": استخرج المسمى النصي مع الأكواد التجارية (مثل CA6714, 15w40, 2E210) والكميات المرتبطة بكل صنف.
-       - "تنبيه فائق الأهمية (الأرقام الممنوعة)": يمنع منعاً باتاً استخراج أرقام الحسابات أو أكواد المنتجات المكونة من 8 أرقام (مثل: 40050025، 40030006، 20680043، 80010388). استخرج المسمى النصي والكود التجاري القصير فقط.
+    4. استخراج الأصناف (قاعدة هامة جداً): قم بتصنيف الأصناف الموجودة في الفاتورة ووضعها في الحقول المخصصة لها بدقة.
+       - الزيوت: ضع نوع الزيت في oilName، وكميته في oilQty وسعره في oilPrice.
+       - فلتر الزيت: ضع الكود في oilFilterName، وكميته في oilFilterQty وسعره في oilFilterPrice.
+       - وبالمثل لباقي الفلاتر (هواء، مكيف، ديزل) والكفرات والمساحات والبطاريات.
+       - أي أجور يد أو صيانة ضعها في خدمات (servicesName/Qty/Price).
+       - أي قطع غيار أخرى لا تنتمي للفئات السابقة ضعها في قطع غيار (sparePartsName/Qty/Price).
+       - إذا كان هناك أكثر من صنف في نفس الفئة (مثلاً قطعتي غيار مختلفتين)، اجمع أسمائهم بفاصلة (+) واجمع كمياتهم أو أسعارهم بنفس الطريقة (مثال: Name: "بوجي + قماش"، Qty: "4 + 1"، Price: "100 + 150").
+       - "تنبيه فائق الأهمية": يمنع استخراج أرقام الحسابات أو الأكواد الطويلة (8 أرقام).
     5. منع التصحيح التلقائي للأسماء: لا تقم بتصحيح الكلمات التي تبدو كأسماء علامات تجارية. 
-       - مثال: كلمة "صني" (Sunny) ترمز لنوع سيارة أو إطار، "يُمنع منعاً باتاً" تغييرها إلى "صيني" (Chinese).
-    6. قاعدة التاريخ: إذا رأيت العام مكتوباً برقمين مثل "26"، فالمقصود هو "2026" نظراً لأننا في هذا العام حالياً.
-    7. تنبيه صارم: لا تخلط بين "اسم الفرع العام" في الترويسة وبين البيانات المسجلة في "عمود نوع السيارة".
-    
-    تحديد المواقع (locations) - المتطلبات النهائية المعتمدة:
-    - هام جداً: المستخدم يقوم حالياً بتدريب النظام يدوياً عبر سحب المربعات. إذا كان لديك سجل إحداثيات سابق تم تصحيحه، التزم به كمرجع أساسي.
-    - لكل حقل، استخرج إحداثيات [ymin, xmin, ymax, xmax] بدقة مجهرية.
-    - **الخريطة الهيكلية المعتمدة (يجب اتباعها حرفياً)**:
-        1. رقم الفاتورة (invoiceNumber): يقع في "أعلى يسار" الصفحة، تحديداً مقابل نص (رقم الفاتورة).
-        2. التاريخ (date): يقع مقابل كلمة (التاريخ). استخرج "التاريخ فقط" (YYYY-MM-DD) وتجاهل الوقت تماماً.
-        3. رقم اللوحة (plateNumber): يقع في "منتصف الصفحة" تقريباً، بوضوح "تحت" نص عنوان (رقم اللوحة).
-        4. عداد السيارة (count): يقع "تحت" نص عنوان (عداد السيارة) مباشرة، ويكون بجانب رقم اللوحة.
-        5. نوع السيارة (carType): يقع "تحت" عنوان (نوع السيارة) في الجدول، ويكون بجانب رقم اللوحة من جهة اليسار.
-        6. الفرع (branch): يقع في "أعلى يمين" الصفحة تماماً بجانب كلمة (الفرع/المركز).
-        7. الأصناف (itemsDescription): تقع في "قلب الفاتورة" ضمن الجدول الرئيسي الممتد في المنتصف.
-    - القاعدة الذهبية: اجعل المربع يحيط "بالقيمة المستخرجة فقط" ولا يشمل العناوين الجانبية.
-    - نظام الإحداثيات الأساسي: [0,0] في الزاوية العلوية اليسرى.
+       - مثال: كلمة "صني" تُكتب كما هي.
+    6. قاعدة التاريخ: إذا رأيت العام مكتوباً برقمين مثل "26"، فالمقصود هو "2026".
+    7. تنبيه صارم: لا تخلط بين اسم الفرع ونوع السيارة.
     
     أماكن الحقول المتوقعة للأهمية:
     - رقم الفاتورة (invoiceNumber): الرقم الموجود أمام أو تحت "رقم الفاتورة".

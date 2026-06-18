@@ -37,43 +37,90 @@ export async function readExcelTemplate(file: File): Promise<ExcelTemplateData> 
 export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateData) {
   const placeholder = '#######';
   
+  // Default headers exactly as the user's Excel schema
+  const defaultHeaders = [
+    'م', 'التاريخ 1', 'رقم الفاتورة', 'اللوحة', 'العداد', 'نوع السيارة',
+    'زيت', 'الكمية', 'السعر',
+    'فلتر زيت', 'الكمية', 'السعر',
+    'فلتر هواء', 'الكمية', 'السعر',
+    'فلتر مكيف', 'الكمية', 'السعر',
+    'فلتر ديزل', 'الكمية', 'السعر',
+    'كفرات', 'الكمية', 'السعر',
+    'مساحة', 'الكمية', 'السعر',
+    'بطاريات', 'الكمية', 'السعر',
+    'خدمات', 'الكمية', 'السعر',
+    'قطع غيار', 'الكمية', 'السعر',
+    'الفرع', 'الاجمالي', 'الضريبة', 'الي بعد الض', 'ملاحظات'
+  ];
+
   const finalHeaders = template?.headers && template.headers.length > 0 
     ? template.headers 
-    : ['م', 'التاريخ', 'رقم الفاتورة', 'اللوحة', 'العدد', 'نوع السيارة', 'الفرع', 'إسم الأصناف', 'الإجمالي', 'الضريبة', 'الاجمالي بعد الضريبة', 'ملاحظات'];
+    : defaultHeaders;
 
   const previousRows = template?.existingData || [];
   const nextId = previousRows.length > 0 ? previousRows.length + 1 : 1;
+  
+  // Deduplicate headers to match XLSX behavior (e.g., الكمية, الكمية_1, الكمية_2)
+  const headerCounts: Record<string, number> = {};
+  const deduplicatedHeaders = finalHeaders.map(h => {
+    const trimmed = h.trim();
+    if (headerCounts[trimmed] === undefined) {
+      headerCounts[trimmed] = 0;
+      return trimmed;
+    } else {
+      headerCounts[trimmed]++;
+      return `${trimmed}_${headerCounts[trimmed]}`;
+    }
+  });
 
   const newRows = newData.map((item, index) => {
     const row: any = {};
-    finalHeaders.forEach(header => {
+    let currentCategory = ''; 
+
+    finalHeaders.forEach((header, idx) => {
       const h = header.trim();
-      if (h === 'م') row[h] = nextId + index;
-      else if (h === 'التاريخ' || h.toLowerCase().includes('date')) row[h] = item.date || placeholder;
-      else if (h === 'رقم الفاتورة' || h.toLowerCase().includes('invoice')) row[h] = item.invoiceNumber || placeholder;
-      else if (h === 'اللوحة' || h.includes('plate')) row[h] = item.plateNumber || placeholder;
-      else if (h === 'العدد' || h.includes('count') || h.includes('عداد')) row[h] = item.count || '';
-      else if (h === 'نوع السيارة' || h.includes('car')) row[h] = item.carType || placeholder;
-      else if (h === 'الفرع' || h.includes('branch')) row[h] = item.branch || placeholder;
-      else if (h.includes('الأصناف') || h.includes('أصناف') || h.includes('صناف') || h.includes('صنف') || h.includes('item')) {
-        const raw = item.itemsDescription || (item as any)[h] || '';
-        if (!raw || raw === placeholder || raw === '') {
-          row[h] = placeholder;
-        } else {
-          // The AI now returns "Quantity - Item Name", so we preserve it and just add RLM for RTL rendering
-          const lines = String(raw).split(/\n|;/).filter((l: string) => l.trim() !== '');
-          const formatted = lines.map((line: string) => {
-            return `\u200F${line.trim()}`;
-          }).join('\n');
-          row[h] = formatted || placeholder;
-        }
+      const dedupKey = template && previousRows.length > 0
+        ? Object.keys(previousRows[0] || {}).find(k => k === deduplicatedHeaders[idx] || k.startsWith(h)) || deduplicatedHeaders[idx]
+        : deduplicatedHeaders[idx];
+
+      if (h === 'م') row[dedupKey] = nextId + index;
+      else if (h === 'التاريخ 1' || h === 'التاريخ' || h.toLowerCase().includes('date')) row[dedupKey] = item.date || placeholder;
+      else if (h === 'رقم الفاتورة' || h.toLowerCase().includes('invoice')) row[dedupKey] = item.invoiceNumber || placeholder;
+      else if (h === 'اللوحة' || h.includes('plate')) row[dedupKey] = item.plateNumber || placeholder;
+      else if (h === 'العداد' || h === 'العدد' || h.includes('count')) row[dedupKey] = item.count || '';
+      else if (h === 'نوع السيارة' || h.includes('car')) row[dedupKey] = item.carType || placeholder;
+      else if (h === 'الفرع' || h.includes('branch')) row[dedupKey] = item.branch || placeholder;
+      else if (h === 'الاجمالي' || h === 'الإجمالي' || h === 'subtotal') row[dedupKey] = item.subTotal || placeholder;
+      else if (h === 'الضريبة' || h.includes('tax')) row[dedupKey] = item.taxAmount || placeholder;
+      else if (h === 'الي بعد الض' || h === 'الاجمالي بعد الضريبة' || h === 'total') row[dedupKey] = item.totalAmount || placeholder;
+      else if (h === 'ملاحظات' || h.includes('note')) row[dedupKey] = ''; 
+      
+      // Categories
+      else if (h === 'زيت') { currentCategory = 'oil'; row[dedupKey] = item.oilName || placeholder; }
+      else if (h === 'فلتر زيت') { currentCategory = 'oilFilter'; row[dedupKey] = item.oilFilterName || placeholder; }
+      else if (h === 'فلتر هواء') { currentCategory = 'airFilter'; row[dedupKey] = item.airFilterName || placeholder; }
+      else if (h === 'فلتر مكيف') { currentCategory = 'acFilter'; row[dedupKey] = item.acFilterName || placeholder; }
+      else if (h === 'فلتر ديزل') { currentCategory = 'dieselFilter'; row[dedupKey] = item.dieselFilterName || placeholder; }
+      else if (h === 'كفرات') { currentCategory = 'tires'; row[dedupKey] = item.tiresName || placeholder; }
+      else if (h === 'مساحة' || h === 'مساحات') { currentCategory = 'wipers'; row[dedupKey] = item.wipersName || placeholder; }
+      else if (h === 'بطاريات') { currentCategory = 'batteries'; row[dedupKey] = item.batteriesName || placeholder; }
+      else if (h === 'خدمات') { currentCategory = 'services'; row[dedupKey] = item.servicesName || placeholder; }
+      else if (h === 'قطع غيار') { currentCategory = 'spareParts'; row[dedupKey] = item.sparePartsName || placeholder; }
+      
+      // Qty and Price mapping based on currentCategory context
+      else if (h === 'الكمية' && currentCategory) {
+        row[dedupKey] = (item as any)[`${currentCategory}Qty`] || placeholder;
       }
-      else if (h === 'الإجمالي' || h === 'subtotal') row[h] = item.subTotal || placeholder;
-      else if (h === 'الضريبة' || h.includes('tax')) row[h] = item.taxAmount || placeholder;
-      else if (h === 'الاجمالي بعد الضريبة' || h === 'total') row[h] = item.totalAmount || placeholder;
-      else if (h === 'ملاحظات' || h.includes('note')) row[h] = ''; 
-      else row[h] = (item as any)[h] || placeholder;
+      else if (h === 'السعر' && currentCategory) {
+        row[dedupKey] = (item as any)[`${currentCategory}Price`] || placeholder;
+      }
+      else row[dedupKey] = (item as any)[h] || placeholder;
     });
+    
+    // To handle JS Object keys deduplication if `template` isn't used, 
+    // XLSX json_to_sheet will automatically map an array of arrays perfectly.
+    // However, since we return an array of objects, if defaultHeaders has duplicates, 
+    // Object.keys will overwrite. So if NO template is used, we must use an Array of Arrays for the sheet!
     return row;
   });
 
@@ -100,14 +147,15 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
   });
   
   // Create spreadsheet content
-  const worksheet = XLSX.utils.json_to_sheet(combinedRows, { header: finalHeaders });
+  // Create spreadsheet content using the deduplicated keys so data aligns correctly
+  const worksheet = XLSX.utils.json_to_sheet(combinedRows, { header: deduplicatedHeaders });
 
   // 1. Set Right-to-Left Direction
   if (!worksheet['!views']) worksheet['!views'] = [];
   worksheet['!views'] = [{ RTL: true }];
 
   // 2. Calculate column widths (Auto-size)
-  const colWidths = finalHeaders.map(col => {
+  const colWidths = deduplicatedHeaders.map(col => {
     let maxLen = col.length + 2; // Start with header length
     combinedRows.forEach(row => {
       const val = row[col] ? String(row[col]) : '';
@@ -126,6 +174,11 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
       const cellRef = XLSX.utils.encode_cell({ c: C, r: R });
       const cell = worksheet[cellRef];
       if (!cell) continue;
+
+      // Restore original header name (remove _1, _2 suffixes)
+      if (R === 0 && finalHeaders[C]) {
+        cell.v = finalHeaders[C];
+      }
 
       // Base style for all cells
       cell.s = {

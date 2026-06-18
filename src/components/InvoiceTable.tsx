@@ -206,7 +206,7 @@ export default function InvoiceTable({
               </tbody>
             </table>
           ) : (
-            <table className="w-full text-right">
+            <table className="w-full text-right whitespace-nowrap">
               <thead className="bg-slate-50/80 backdrop-blur sticky top-0 z-10 border-b border-slate-100">
                 <tr>
                   <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 w-16 text-slate-400">م</th>
@@ -215,8 +215,18 @@ export default function InvoiceTable({
                   <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">اللوحة</th>
                   <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">العداد</th>
                   <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">نوع السيارة</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400 bg-amber-50">زيت</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400 bg-amber-50">ف.زيت</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400 bg-amber-50">ف.هواء</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400 bg-amber-50">ف.مكيف</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400 bg-amber-50">ف.ديزل</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400 bg-indigo-50">كفرات</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400 bg-indigo-50">مساحات</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400 bg-indigo-50">بطاريات</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400 bg-rose-50">خدمات</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400 bg-rose-50">قطع غيار</th>
                   <th className="p-3 text-sm font-black uppercase tracking-wider border-l border-slate-100 text-slate-400">الإجمالي</th>
-                  <th className="p-3 text-sm font-black uppercase tracking-wider text-slate-400 w-20">إجراءات</th>
+                  <th className="p-3 text-sm font-black uppercase tracking-wider text-slate-400 w-20 sticky left-0 bg-slate-50 shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)]">إجراءات</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -272,10 +282,43 @@ export default function InvoiceTable({
                     <td className="p-3 text-sm font-bold text-amber-700 whitespace-nowrap">{res.plateNumber}</td>
                     <td className="p-3 text-sm text-slate-500 whitespace-nowrap">{res.count}</td>
                     <td className="p-3 text-sm font-medium text-slate-700 max-w-[180px] truncate">{res.carType}</td>
+                    
+                    {/* Items Section */}
+                    <td className="p-3 bg-amber-50/20 text-xs">
+                      <div className="flex flex-col"><span className="font-bold">{res.oilName || '-'}</span><span className="text-slate-400">كمية: {res.oilQty || '-'} | {res.oilPrice || '-'}</span></div>
+                    </td>
+                    <td className="p-3 bg-amber-50/20 text-xs">
+                      <div className="flex flex-col"><span className="font-bold">{res.oilFilterName || '-'}</span><span className="text-slate-400">كمية: {res.oilFilterQty || '-'} | {res.oilFilterPrice || '-'}</span></div>
+                    </td>
+                    <td className="p-3 bg-amber-50/20 text-xs">
+                      <div className="flex flex-col"><span className="font-bold">{res.airFilterName || '-'}</span><span className="text-slate-400">كمية: {res.airFilterQty || '-'} | {res.airFilterPrice || '-'}</span></div>
+                    </td>
+                    <td className="p-3 bg-amber-50/20 text-xs">
+                      <div className="flex flex-col"><span className="font-bold">{res.acFilterName || '-'}</span><span className="text-slate-400">كمية: {res.acFilterQty || '-'} | {res.acFilterPrice || '-'}</span></div>
+                    </td>
+                    <td className="p-3 bg-amber-50/20 text-xs">
+                      <div className="flex flex-col"><span className="font-bold">{res.dieselFilterName || '-'}</span><span className="text-slate-400">كمية: {res.dieselFilterQty || '-'} | {res.dieselFilterPrice || '-'}</span></div>
+                    </td>
+                    <td className="p-3 bg-indigo-50/20 text-xs">
+                      <div className="flex flex-col"><span className="font-bold">{res.tiresName || '-'}</span><span className="text-slate-400">كمية: {res.tiresQty || '-'} | {res.tiresPrice || '-'}</span></div>
+                    </td>
+                    <td className="p-3 bg-indigo-50/20 text-xs">
+                      <div className="flex flex-col"><span className="font-bold">{res.wipersName || '-'}</span><span className="text-slate-400">كمية: {res.wipersQty || '-'} | {res.wipersPrice || '-'}</span></div>
+                    </td>
+                    <td className="p-3 bg-indigo-50/20 text-xs">
+                      <div className="flex flex-col"><span className="font-bold">{res.batteriesName || '-'}</span><span className="text-slate-400">كمية: {res.batteriesQty || '-'} | {res.batteriesPrice || '-'}</span></div>
+                    </td>
+                    <td className="p-3 bg-rose-50/20 text-xs">
+                      <div className="flex flex-col"><span className="font-bold">{res.servicesName || '-'}</span><span className="text-slate-400">كمية: {res.servicesQty || '-'} | {res.servicesPrice || '-'}</span></div>
+                    </td>
+                    <td className="p-3 bg-rose-50/20 text-xs">
+                      <div className="flex flex-col"><span className="font-bold">{res.sparePartsName || '-'}</span><span className="text-slate-400">كمية: {res.sparePartsQty || '-'} | {res.sparePartsPrice || '-'}</span></div>
+                    </td>
+
                     <td className="p-3 text-sm font-black text-slate-900 whitespace-nowrap">
                       {res.totalAmount ? `${Number(res.totalAmount).toLocaleString()} ر.س` : '-'}
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 sticky left-0 bg-white shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] group-hover:bg-slate-50 z-10">
                       <div className="flex items-center gap-1 justify-center">
                         <button 
                           onClick={(e) => { e.stopPropagation(); onSelect(res); }}

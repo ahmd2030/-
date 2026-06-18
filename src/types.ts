@@ -12,7 +12,36 @@ export interface InvoiceData {
   count: string; // العدد (مثل العداد أو الكمية)
   carType: string; // نوع السيارة
   branch: string; // الفرع
-  itemsDescription: string; // إسم الأصناف
+  oilName: string;
+  oilQty: string;
+  oilPrice: string;
+  oilFilterName: string;
+  oilFilterQty: string;
+  oilFilterPrice: string;
+  airFilterName: string;
+  airFilterQty: string;
+  airFilterPrice: string;
+  acFilterName: string;
+  acFilterQty: string;
+  acFilterPrice: string;
+  dieselFilterName: string;
+  dieselFilterQty: string;
+  dieselFilterPrice: string;
+  tiresName: string;
+  tiresQty: string;
+  tiresPrice: string;
+  wipersName: string;
+  wipersQty: string;
+  wipersPrice: string;
+  batteriesName: string;
+  batteriesQty: string;
+  batteriesPrice: string;
+  servicesName: string;
+  servicesQty: string;
+  servicesPrice: string;
+  sparePartsName: string;
+  sparePartsQty: string;
+  sparePartsPrice: string;
   subTotal: number; // الإجمالي قبل الضريبة
   taxAmount: number; // الضريبة
   totalAmount: number; // الإجمالي بعد الضريبة
@@ -70,7 +99,38 @@ export const FIELD_COLORS: Record<string, { bg: string, border: string, text: st
   count: { bg: 'bg-emerald-100', border: 'border-emerald-500', text: 'text-emerald-900', highlight: 'rgba(5, 150, 105, 0.15)', solid: '#059669' },
   carType: { bg: 'bg-fuchsia-100', border: 'border-fuchsia-500', text: 'text-fuchsia-900', highlight: 'rgba(192, 38, 211, 0.15)', solid: '#C026D3' },
   branch: { bg: 'bg-rose-100', border: 'border-rose-500', text: 'text-rose-900', highlight: 'rgba(225, 29, 72, 0.15)', solid: '#E11D48' },
-  itemsDescription: { bg: 'bg-slate-100', border: 'border-slate-500', text: 'text-slate-900', highlight: 'rgba(71, 85, 105, 0.15)', solid: '#475569' },
+  oilName: { bg: 'bg-amber-50', border: 'border-amber-400', text: 'text-amber-900', highlight: 'rgba(251, 191, 36, 0.15)', solid: '#FBBF24' },
+  oilQty: { bg: 'bg-amber-50', border: 'border-amber-400', text: 'text-amber-900', highlight: 'rgba(251, 191, 36, 0.15)', solid: '#FBBF24' },
+  oilPrice: { bg: 'bg-amber-50', border: 'border-amber-400', text: 'text-amber-900', highlight: 'rgba(251, 191, 36, 0.15)', solid: '#FBBF24' },
+  oilFilterName: { bg: 'bg-amber-100', border: 'border-amber-500', text: 'text-amber-900', highlight: 'rgba(245, 158, 11, 0.15)', solid: '#F59E0B' },
+  oilFilterQty: { bg: 'bg-amber-100', border: 'border-amber-500', text: 'text-amber-900', highlight: 'rgba(245, 158, 11, 0.15)', solid: '#F59E0B' },
+  oilFilterPrice: { bg: 'bg-amber-100', border: 'border-amber-500', text: 'text-amber-900', highlight: 'rgba(245, 158, 11, 0.15)', solid: '#F59E0B' },
+  airFilterName: { bg: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-900', highlight: 'rgba(251, 146, 60, 0.15)', solid: '#FB923C' },
+  airFilterQty: { bg: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-900', highlight: 'rgba(251, 146, 60, 0.15)', solid: '#FB923C' },
+  airFilterPrice: { bg: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-900', highlight: 'rgba(251, 146, 60, 0.15)', solid: '#FB923C' },
+  acFilterName: { bg: 'bg-orange-100', border: 'border-orange-500', text: 'text-orange-900', highlight: 'rgba(249, 115, 22, 0.15)', solid: '#F97316' },
+  acFilterQty: { bg: 'bg-orange-100', border: 'border-orange-500', text: 'text-orange-900', highlight: 'rgba(249, 115, 22, 0.15)', solid: '#F97316' },
+  acFilterPrice: { bg: 'bg-orange-100', border: 'border-orange-500', text: 'text-orange-900', highlight: 'rgba(249, 115, 22, 0.15)', solid: '#F97316' },
+  dieselFilterName: { bg: 'bg-stone-100', border: 'border-stone-500', text: 'text-stone-900', highlight: 'rgba(120, 113, 108, 0.15)', solid: '#78716C' },
+  dieselFilterQty: { bg: 'bg-stone-100', border: 'border-stone-500', text: 'text-stone-900', highlight: 'rgba(120, 113, 108, 0.15)', solid: '#78716C' },
+  dieselFilterPrice: { bg: 'bg-stone-100', border: 'border-stone-500', text: 'text-stone-900', highlight: 'rgba(120, 113, 108, 0.15)', solid: '#78716C' },
+  tiresName: { bg: 'bg-zinc-100', border: 'border-zinc-500', text: 'text-zinc-900', highlight: 'rgba(113, 113, 122, 0.15)', solid: '#71717A' },
+  tiresQty: { bg: 'bg-zinc-100', border: 'border-zinc-500', text: 'text-zinc-900', highlight: 'rgba(113, 113, 122, 0.15)', solid: '#71717A' },
+  tiresPrice: { bg: 'bg-zinc-100', border: 'border-zinc-500', text: 'text-zinc-900', highlight: 'rgba(113, 113, 122, 0.15)', solid: '#71717A' },
+  wipersName: { bg: 'bg-cyan-100', border: 'border-cyan-500', text: 'text-cyan-900', highlight: 'rgba(6, 182, 212, 0.15)', solid: '#06B6D4' },
+  wipersQty: { bg: 'bg-cyan-100', border: 'border-cyan-500', text: 'text-cyan-900', highlight: 'rgba(6, 182, 212, 0.15)', solid: '#06B6D4' },
+  wipersPrice: { bg: 'bg-cyan-100', border: 'border-cyan-500', text: 'text-cyan-900', highlight: 'rgba(6, 182, 212, 0.15)', solid: '#06B6D4' },
+  batteriesName: { bg: 'bg-yellow-100', border: 'border-yellow-500', text: 'text-yellow-900', highlight: 'rgba(234, 179, 8, 0.15)', solid: '#EAB308' },
+  batteriesQty: { bg: 'bg-yellow-100', border: 'border-yellow-500', text: 'text-yellow-900', highlight: 'rgba(234, 179, 8, 0.15)', solid: '#EAB308' },
+  batteriesPrice: { bg: 'bg-yellow-100', border: 'border-yellow-500', text: 'text-yellow-900', highlight: 'rgba(234, 179, 8, 0.15)', solid: '#EAB308' },
+  servicesName: { bg: 'bg-pink-100', border: 'border-pink-500', text: 'text-pink-900', highlight: 'rgba(236, 72, 153, 0.15)', solid: '#EC4899' },
+  servicesQty: { bg: 'bg-pink-100', border: 'border-pink-500', text: 'text-pink-900', highlight: 'rgba(236, 72, 153, 0.15)', solid: '#EC4899' },
+  servicesPrice: { bg: 'bg-pink-100', border: 'border-pink-500', text: 'text-pink-900', highlight: 'rgba(236, 72, 153, 0.15)', solid: '#EC4899' },
+  sparePartsName: { bg: 'bg-teal-100', border: 'border-teal-500', text: 'text-teal-900', highlight: 'rgba(20, 184, 166, 0.15)', solid: '#14B8A6' },
+  sparePartsQty: { bg: 'bg-teal-100', border: 'border-teal-500', text: 'text-teal-900', highlight: 'rgba(20, 184, 166, 0.15)', solid: '#14B8A6' },
+  sparePartsPrice: { bg: 'bg-teal-100', border: 'border-teal-500', text: 'text-teal-900', highlight: 'rgba(20, 184, 166, 0.15)', solid: '#14B8A6' },
+  subTotal: { bg: 'bg-slate-100', border: 'border-slate-400', text: 'text-slate-900', highlight: 'rgba(148, 163, 184, 0.15)', solid: '#94A3B8' },
+  taxAmount: { bg: 'bg-slate-200', border: 'border-slate-500', text: 'text-slate-900', highlight: 'rgba(100, 116, 139, 0.15)', solid: '#64748B' },
   totalAmount: { bg: 'bg-violet-100', border: 'border-violet-500', text: 'text-violet-900', highlight: 'rgba(124, 58, 237, 0.15)', solid: '#7C3AED' },
 };
 
@@ -81,7 +141,36 @@ export const FIELD_NAMES: Record<string, string> = {
   count: 'العداد',
   carType: 'نوع السيارة',
   branch: 'الفرع',
-  itemsDescription: 'الأصناف',
+  oilName: 'اسم الزيت',
+  oilQty: 'كمية الزيت',
+  oilPrice: 'سعر الزيت',
+  oilFilterName: 'فلتر زيت',
+  oilFilterQty: 'كمية فلتر الزيت',
+  oilFilterPrice: 'سعر فلتر الزيت',
+  airFilterName: 'فلتر هواء',
+  airFilterQty: 'كمية فلتر الهواء',
+  airFilterPrice: 'سعر فلتر الهواء',
+  acFilterName: 'فلتر مكيف',
+  acFilterQty: 'كمية فلتر المكيف',
+  acFilterPrice: 'سعر فلتر المكيف',
+  dieselFilterName: 'فلتر ديزل',
+  dieselFilterQty: 'كمية فلتر الديزل',
+  dieselFilterPrice: 'سعر فلتر الديزل',
+  tiresName: 'كفرات',
+  tiresQty: 'كمية الكفرات',
+  tiresPrice: 'سعر الكفرات',
+  wipersName: 'مساحات',
+  wipersQty: 'كمية المساحات',
+  wipersPrice: 'سعر المساحات',
+  batteriesName: 'بطاريات',
+  batteriesQty: 'كمية البطاريات',
+  batteriesPrice: 'سعر البطاريات',
+  servicesName: 'خدمات',
+  servicesQty: 'كمية الخدمات',
+  servicesPrice: 'سعر الخدمات',
+  sparePartsName: 'قطع غيار',
+  sparePartsQty: 'كمية قطع الغيار',
+  sparePartsPrice: 'سعر قطع الغيار',
   totalAmount: 'الإجمالي',
   taxAmount: 'الضريبة',
   subTotal: 'المبلغ قبل الضريبة',

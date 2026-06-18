@@ -127,11 +127,26 @@ export default function Dashboard() {
 
         if (savedAnalysisResults) {
           const parsed = JSON.parse(savedAnalysisResults);
-          if (Array.isArray(parsed)) setAnalysisResults(parsed);
+          if (Array.isArray(parsed)) {
+            // Check if using old schema (itemsDescription instead of specific fields)
+            if (parsed.length > 0 && parsed[0].itemsDescription !== undefined) {
+              console.log("Old schema detected, clearing old invoices.");
+              localStorage.removeItem('analysisResults');
+              localStorage.removeItem('verificationRawResults');
+            } else {
+              setAnalysisResults(parsed);
+            }
+          }
         }
         if (savedVerificationRawResults) {
           const parsed = JSON.parse(savedVerificationRawResults);
-          if (Array.isArray(parsed)) setVerificationRawResults(parsed);
+          if (Array.isArray(parsed)) {
+            if (parsed.length > 0 && parsed[0].itemsDescription !== undefined) {
+              // Ignore old schema
+            } else {
+              setVerificationRawResults(parsed);
+            }
+          }
         }
       } catch (e) {
         console.error("Failed to load from localStorage", e);
