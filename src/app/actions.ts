@@ -11,33 +11,44 @@ const INVOICE_SCHEMA = {
   properties: {
     invoiceNumber: { type: SchemaType.STRING, description: "رقم الفاتورة" },
     date: { type: SchemaType.STRING, description: "تاريخ الفاتورة بتنسيق YYYY-MM-DD" },
-    plateNumber: { type: SchemaType.STRING, description: "رقم لوحة السيارة (استخرجه بالترتيب البصري المحض من اليمين لليسار، مثال: أ ب ج 123)" },
-    count: { type: SchemaType.STRING, description: "العدد أو العداد المعروض في الفاتورة" },
-    carType: { type: SchemaType.STRING, description: "نوع السيارة أو موديلها" },
-    branch: { type: SchemaType.STRING, description: "اسم المنطقة أو الفرع (مثل الدمام، جدة، الخبر، الرياض، الخ)" },
-    itemsDescription: { 
-      type: SchemaType.ARRAY, 
-      items: { type: SchemaType.STRING },
-      description: "قائمة الأصناف المباعة، كل صنف في عنصر منفصل بصيغة: 'الكمية - اسم الصنف'" 
-    },
+    plateNumber: { type: SchemaType.STRING, description: "رقم لوحة السيارة" },
+    count: { type: SchemaType.STRING, description: "العداد أو الكمية" },
+    carType: { type: SchemaType.STRING, description: "نوع السيارة" },
+    branch: { type: SchemaType.STRING, description: "الفرع" },
+    oilName: { type: SchemaType.STRING, description: "اسم أو نوع الزيت (مثل 15W40، 5W30)" },
+    oilQty: { type: SchemaType.STRING, description: "كمية الزيت" },
+    oilPrice: { type: SchemaType.STRING, description: "سعر الزيت الإجمالي" },
+    oilFilterName: { type: SchemaType.STRING, description: "اسم فلتر الزيت وكوده" },
+    oilFilterQty: { type: SchemaType.STRING, description: "كمية فلتر الزيت" },
+    oilFilterPrice: { type: SchemaType.STRING, description: "سعر فلتر الزيت" },
+    airFilterName: { type: SchemaType.STRING, description: "اسم فلتر الهواء" },
+    airFilterQty: { type: SchemaType.STRING, description: "كمية فلتر الهواء" },
+    airFilterPrice: { type: SchemaType.STRING, description: "سعر فلتر الهواء" },
+    acFilterName: { type: SchemaType.STRING, description: "اسم فلتر المكيف" },
+    acFilterQty: { type: SchemaType.STRING, description: "كمية فلتر المكيف" },
+    acFilterPrice: { type: SchemaType.STRING, description: "سعر فلتر المكيف" },
+    dieselFilterName: { type: SchemaType.STRING, description: "اسم فلتر الديزل" },
+    dieselFilterQty: { type: SchemaType.STRING, description: "كمية فلتر الديزل" },
+    dieselFilterPrice: { type: SchemaType.STRING, description: "سعر فلتر الديزل" },
+    tiresName: { type: SchemaType.STRING, description: "وصف أو نوع الكفرات (مثل هانكوك، يوكوهاما)" },
+    tiresQty: { type: SchemaType.STRING, description: "كمية الكفرات" },
+    tiresPrice: { type: SchemaType.STRING, description: "سعر الكفرات" },
+    wipersName: { type: SchemaType.STRING, description: "وصف المساحات" },
+    wipersQty: { type: SchemaType.STRING, description: "كمية المساحات" },
+    wipersPrice: { type: SchemaType.STRING, description: "سعر المساحات" },
+    batteriesName: { type: SchemaType.STRING, description: "وصف البطاريات (مثل هانكوك، باناسونيك، اسيديلكو)" },
+    batteriesQty: { type: SchemaType.STRING, description: "كمية البطاريات" },
+    batteriesPrice: { type: SchemaType.STRING, description: "سعر البطاريات" },
+    servicesName: { type: SchemaType.STRING, description: "أجور يد أو صيانة (مثل أجور تغيير، فحص)" },
+    servicesQty: { type: SchemaType.STRING, description: "كمية الخدمات" },
+    servicesPrice: { type: SchemaType.STRING, description: "سعر الخدمات" },
+    sparePartsName: { type: SchemaType.STRING, description: "قطع غيار أخرى (مثل فحمات، بواجي، قماش)" },
+    sparePartsQty: { type: SchemaType.STRING, description: "كمية قطع الغيار" },
+    sparePartsPrice: { type: SchemaType.STRING, description: "سعر قطع الغيار" },
     subTotal: { type: SchemaType.NUMBER, description: "المبلغ الإجمالي قبل الضريبة" },
-    taxAmount: { type: SchemaType.NUMBER, description: "مبلغ الضريبة (VAT)" },
-    totalAmount: { type: SchemaType.NUMBER, description: "المبلغ الإجمالي النهائي شامل الضريبة" },
-    notes: { type: SchemaType.STRING, description: "أي ملاحظات إضافية هامة" },
-    locations: {
-      type: SchemaType.OBJECT,
-      description: "إحداثيات المربعات المحيطة لكل حقل كـ [ymin, xmin, ymax, xmax] (قيم بين 0-1000)",
-      properties: {
-        invoiceNumber: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER }, description: "[ymin, xmin, ymax, xmax]" },
-        date: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
-        plateNumber: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
-        count: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
-        carType: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
-        branch: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
-        itemsDescription: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
-        totalAmount: { type: SchemaType.ARRAY, items: { type: SchemaType.NUMBER } },
-      }
-    }
+    taxAmount: { type: SchemaType.NUMBER, description: "مبلغ الضريبة" },
+    totalAmount: { type: SchemaType.NUMBER, description: "الإجمالي بعد الضريبة" },
+    notes: { type: SchemaType.STRING, description: "ملاحظات" }
   },
   required: [],
 };
@@ -78,20 +89,27 @@ export async function analyzeInvoiceAction(
     ` : '';
 
   const prompt = `
-    أنت محلل مالي دقيق جداً وخبير في تحديد المواقع البصرية. قم باستخراج البيانات من هذه الفاتورة المرفقة.
+    أنت محلل مالي دقيق جداً وخبير في تصنيف الأصناف لقطع الغيار والصيانة. استخرج البيانات من الفاتورة بدقة.
     
     ${hintSnippet}
     ${knowledgeSnippet}
     
-    قواعد التصنيف الهامة:
-    1. حقل "branch" (الفرع/المنطقة): هذا الحقل يجب أن يستخرج حصراً من سطر وصف السيارة إذا وجد فاصل (/) أو من خانة الموقع داخل الجدول.
-    2. حقل "carType" (نوع السيارة): استخرج اسم وموديل السيارة فقط.
-    3. حقل "plateNumber" (رقم اللوحة): استخرج الحروف بالترتيب البصري من اليمين لليسار.
-    4. حقل "itemsDescription" (وصف الأصناف): استخرج كل صنف في سطر مستقل، واكتبه بصيغة "الكمية - اسم الصنف" (مثال: 8- زيت، 1- فلتر ديزل). إذا لم تكن الكمية مكتوبة، افترض أنها 1 واكتب "1- اسم الصنف". تأكد من وضع رقم الكمية في بداية السطر دائماً.
-    5. منع التصحيح التلقائي للأسماء.
-    6. قاعدة التاريخ: رقمين مثل "26" تعني 2026.
+    قواعد التصنيف الهامة جداً (الرجاء الالتزام بها حرفياً):
+    1. حقل "branch": استخرجه من أعلى الفاتورة (مثل الرياض، الدمام).
+    2. حقل "carType": نوع وموديل السيارة فقط.
+    3. الزيوت (oilName, oilQty, oilPrice): أي شيء يحتوي على 15W40, 5W30, زيت, Oil. مثال: "زيت سوبر جي تي".
+    4. فلاتر الزيت (oilFilterName, ...): أي فلتر يخص الزيت أو الماكينة (Oil Filter, سيفون).
+    5. فلاتر الهواء (airFilterName, ...): فلتر هواء الماكينة.
+    6. فلاتر المكيف (acFilterName, ...): فلتر مكيف الغمارة.
+    7. فلاتر الديزل (dieselFilterName, ...): صفاية ديزل، فلتر ديزل.
+    8. الكفرات (tiresName, ...): إطارات، كفر، هانكوك، دنلوب، يوكوهاما.
+    9. المساحات (wipersName, ...): مساحة زجاج، ربل مساحة.
+    10. البطاريات (batteriesName, ...): بطارية، اسيديلكو، هانكوك (إذا كتب بجانبها امبير أو بطارية).
+    11. الخدمات (servicesName, ...): أجور يد، شغل يد، تغيير، فحص، صيانة، ميزان.
+    12. قطع الغيار (sparePartsName, ...): أي صنف آخر غير مذكور أعلاه (مثل فحمات، هوبات، قماش، بواجي، سير).
     
-    يجب أن تكون النتيجة بتنسيق JSON مطابق للمخطط الموفر.
+    لجميع الأصناف، استخرج الاسم (Name) والكمية (Qty) والسعر الإجمالي للصنف (Price). إذا لم توجد كمية، ضع "1".
+    يجب أن تكون النتيجة بتنسيق JSON حصراً.
   `;
 
   const parts: any[] = [{ text: prompt }];

@@ -429,6 +429,24 @@ export default function InvoicePreviewModal({
                 </div>
                 <p className="text-white/30 font-black text-xl tracking-[0.3em] uppercase">جاري القراءة البصرية المتقدمة...</p>
               </div>
+            ) : invoice.originalFile?.type === 'application/pdf' && !isTrainingMode ? (
+              <div 
+                className="relative shadow-[0_60px_120px_-30px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden bg-white w-full h-[80vh]"
+                style={{ width: '900px' }}
+              >
+                <div className="absolute top-0 left-0 right-0 bg-blue-500 text-white text-center py-2 font-bold z-50 text-sm">
+                  وضع عرض PDF: يمكنك الآن تحديد النص ونسخه بسهولة. للعودة للوضع القديم اضغط على زر تحريك المربعات في الأعلى.
+                </div>
+                <object 
+                  data={URL.createObjectURL(invoice.originalFile)} 
+                  type="application/pdf" 
+                  width="100%" 
+                  height="100%"
+                  className="mt-10"
+                >
+                  <p>لا يدعم متصفحك عرض الـ PDF.</p>
+                </object>
+              </div>
             ) : previewImage ? (
               <div 
                 ref={containerRef}

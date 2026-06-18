@@ -817,7 +817,11 @@ export default function Dashboard() {
   const handleSaveEdit = async () => {
     if (!editData || !selectedInvoice) return;
     
-    const fieldsToLearn = ['branch', 'carType', 'itemsDescription'];
+    const fieldsToLearn = [
+      'branch', 'carType',
+      'oilName', 'oilFilterName', 'airFilterName', 'acFilterName', 'dieselFilterName',
+      'tiresName', 'wipersName', 'batteriesName', 'servicesName', 'sparePartsName'
+    ];
     for (const field of fieldsToLearn) {
       const oldVal = (selectedInvoice as any)[field];
       const newVal = (editData as any)[field];
