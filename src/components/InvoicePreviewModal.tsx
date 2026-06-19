@@ -84,6 +84,14 @@ export default function InvoicePreviewModal({
   const [activeDragField, setActiveDragField] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Reset scroll to top when invoice changes
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [invoice.id, invoice.invoiceNumber]);
 
   const pdfUrl = React.useMemo(() => {
     if (invoice.originalFile && invoice.originalFile.type === 'application/pdf') {
@@ -176,7 +184,7 @@ export default function InvoicePreviewModal({
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 space-y-5 custom-scrollbar pb-10">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar pb-10">
             {/* Verification Result Audit Card */}
             {verificationResult && (
               <div className="mb-6">
@@ -283,115 +291,191 @@ export default function InvoicePreviewModal({
               </div>
             )}
 
-            {/* Field Inputs - sorted: filled first, empty after, totals at bottom */}
+            {/* Field Inputs - sorted: filled first, totals second, empty last */}
             {(() => {
               const allFields = Object.keys(FIELD_COLORS) as Array<keyof typeof FIELD_COLORS>;
               
-              // Define total/financial summary fields that always go last
               const totalFields = new Set(['subTotal', 'taxAmount', 'totalAmount']);
               
-              // Check if a field has meaningful data
+              // Fields that should be paired inline (invoiceNumber+date)
+              const inlinePairs: [string, string][] = [
+                ['invoiceNumber', 'date'],
+              ];
+              const inlinePairedSet = new Set(inlinePairs.flat());
+
+              // Category groups: name field → [qtyField, priceField]
+              const categoryGroups: Record<string, [string, string]> = {
+                oilName: ['oilQty', 'oilPrice'],
+                oilFilterName: ['oilFilterQty', 'oilFilterPrice'],
+                gearOilName: ['gearOilQty', 'gearOilPrice'],
+                diffOilName: ['diffOilQty', 'diffOilPrice'],
+                airFilterName: ['airFilterQty', 'airFilterPrice'],
+                acFilterName: ['acFilterQty', 'acFilterPrice'],
+                dieselFilterName: ['dieselFilterQty', 'dieselFilterPrice'],
+                dieselFilterServiceName: ['dieselFilterServiceQty', 'dieselFilterServicePrice'],
+                tiresName: ['tiresQty', 'tiresPrice'],
+                wipersName: ['wipersQty', 'wipersPrice'],
+                batteriesName: ['batteriesQty', 'batteriesPrice'],
+                servicesName: ['servicesQty', 'servicesPrice'],
+                sparePartsName: ['sparePartsQty', 'sparePartsPrice'],
+              };
+              const childFields = new Set(Object.values(categoryGroups).flat());
+
               const hasData = (field: string) => {
                 const val = String(editData[field] || '');
                 return val !== '' && val !== '0' && val !== 'null' && val !== '#######';
               };
 
-              // Sort: filled non-total → totals → empty
-              const sorted = [...allFields].sort((a, b) => {
+              // Build top-level fields (excluding children that are rendered inside their parent)
+              const topFields = allFields.filter(f => !childFields.has(f as string) && !inlinePairs.slice(1).flat().includes(f as string));
+
+              const sorted = [...topFields].sort((a, b) => {
                 const aIsTotal = totalFields.has(a as string);
                 const bIsTotal = totalFields.has(b as string);
                 const aHas = hasData(a as string);
                 const bHas = hasData(b as string);
                 const aIsEmpty = !aHas && !aIsTotal;
                 const bIsEmpty = !bHas && !bIsTotal;
-                
-                // Empty always last
                 if (aIsEmpty && !bIsEmpty) return 1;
                 if (!aIsEmpty && bIsEmpty) return -1;
-                // Totals before empty, after filled
                 if (aIsTotal && bHas && !bIsTotal) return 1;
                 if (!aIsTotal && bIsTotal && aHas) return -1;
                 return 0;
               });
 
-              return sorted.map((field, idx) => {
+              const renderInput = (field: string, compact = false) => (
+                <input
+                  key={field}
+                  type="text"
+                  value={String(editData[field] || '')}
+                  onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
+                  className={cn(
+                    "w-full bg-white border-2 border-slate-200/60 rounded-2xl font-black focus:border-slate-900 transition-all shadow-sm",
+                    compact ? "p-3 text-sm" : "p-4 text-base",
+                    hoveredField === field && "border-slate-900"
+                  )}
+                  style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field]?.highlight : undefined }}
+                />
+              );
+
+              const elements: React.ReactNode[] = [];
+              let prevWasEmpty = false;
+              let prevWasTotal = false;
+
+              // Handle invoiceNumber + date inline pair first
+              const pairFields = ['invoiceNumber', 'date'];
+              const pairHasData = pairFields.some(f => hasData(f));
+              elements.push(
+                <div key="pair-invoice-date" className="bg-slate-50 border-2 border-transparent rounded-[2rem] p-4 hover:bg-slate-100/50 transition-all">
+                  <div className="flex gap-3">
+                    {pairFields.map(field => (
+                      <div key={field} className="flex-1" onMouseEnter={() => setHoveredField(field)} onMouseLeave={() => setHoveredField(null)}>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className={cn("w-3 h-3 rounded-full flex-shrink-0", FIELD_COLORS[field]?.border.replace('border-', 'bg-'))} />
+                          <label className="text-xs font-black text-slate-600">{FIELD_NAMES[field] || field}</label>
+                        </div>
+                        {renderInput(field, true)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+
+              sorted.forEach((field, idx) => {
+                if (field === 'invoiceNumber' || field === 'date') return; // already rendered
+
                 const isEmpty = !hasData(field as string) && !totalFields.has(field as string);
                 const isTotal = totalFields.has(field as string);
-                const prevField = idx > 0 ? sorted[idx - 1] : null;
-                const prevIsTotal = prevField ? totalFields.has(prevField as string) : false;
-                const prevHasData = prevField ? hasData(prevField as string) : false;
-                const prevIsEmpty = prevField ? (!prevHasData && !prevIsTotal) : false;
-                
-                const showDivider = idx > 0 && (
-                  (isTotal && !prevIsTotal && !prevIsEmpty) ||   // before totals section
-                  (isEmpty && !prevIsEmpty)                       // before empty section
-                );
+                const children = categoryGroups[field as string];
+                const allChildrenEmpty = children ? children.every(c => !hasData(c)) : false;
+                const fieldIsEmpty = isEmpty || (children ? !hasData(field as string) && allChildrenEmpty : false);
 
-                return (
-                  <React.Fragment key={field}>
-                    {showDivider && (
-                      <div className="flex items-center gap-3 my-2">
-                        <div className="flex-1 h-px bg-slate-200" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                          {isTotal ? '🧾 الإجماليات' : '⬇ حقول فارغة'}
-                        </span>
-                        <div className="flex-1 h-px bg-slate-200" />
+                // Dividers
+                if (isTotal && !prevWasTotal && !prevWasEmpty) {
+                  elements.push(
+                    <div key={`div-total-${idx}`} className="flex items-center gap-3 my-1">
+                      <div className="flex-1 h-px bg-slate-200" />
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">🧾 الإجماليات</span>
+                      <div className="flex-1 h-px bg-slate-200" />
+                    </div>
+                  );
+                } else if (fieldIsEmpty && !prevWasEmpty) {
+                  elements.push(
+                    <div key={`div-empty-${idx}`} className="flex items-center gap-3 my-1">
+                      <div className="flex-1 h-px bg-slate-200" />
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">⬇ حقول فارغة</span>
+                      <div className="flex-1 h-px bg-slate-200" />
+                    </div>
+                  );
+                }
+                prevWasEmpty = !!fieldIsEmpty;
+                prevWasTotal = !!isTotal;
+
+                elements.push(
+                  <div
+                    key={field}
+                    className={cn(
+                      "p-4 rounded-[2rem] transition-all border-2",
+                      hoveredField === field
+                        ? "bg-white shadow-2xl ring-4 ring-slate-100 border-slate-900"
+                        : fieldIsEmpty
+                          ? "bg-slate-50/40 border-transparent opacity-60 hover:opacity-100 hover:bg-slate-100/50"
+                          : isTotal
+                            ? "bg-slate-900/5 border-transparent hover:bg-slate-100/50"
+                            : "bg-slate-50 border-transparent hover:bg-slate-100/50"
+                    )}
+                    onMouseEnter={() => setHoveredField(field as string)}
+                    onMouseLeave={() => setHoveredField(null)}
+                  >
+                    {/* Name row label */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className={cn("w-4 h-4 rounded-full shadow-sm flex-shrink-0", FIELD_COLORS[field]?.border.replace('border-', 'bg-'))} />
+                        <label className={cn("text-sm font-black", fieldIsEmpty ? "text-slate-400" : isTotal ? "text-slate-900" : "text-slate-700")}>
+                          {FIELD_NAMES[field] || field}
+                        </label>
+                      </div>
+                      {fieldIsEmpty && <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">فارغ</span>}
+                    </div>
+
+                    {/* Name input */}
+                    {field === 'itemsDescription' ? (
+                      <textarea
+                        value={String(editData[field] || '')}
+                        onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
+                        className={cn(
+                          "w-full p-4 bg-white border-2 border-slate-200/60 rounded-2xl text-base font-black focus:border-slate-900 transition-all min-h-[120px] leading-relaxed shadow-sm",
+                          hoveredField === field && "border-slate-900"
+                        )}
+                        style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field]?.highlight : undefined }}
+                      />
+                    ) : (
+                      renderInput(field as string)
+                    )}
+
+                    {/* Qty + Price row below name */}
+                    {children && (
+                      <div className="flex gap-2 mt-2">
+                        {children.map(childField => (
+                          <div
+                            key={childField}
+                            className="flex-1"
+                            onMouseEnter={() => setHoveredField(childField)}
+                            onMouseLeave={() => setHoveredField(null)}
+                          >
+                            <label className="text-[10px] font-black text-slate-500 block mb-1 text-center">
+                              {FIELD_NAMES[childField] || childField}
+                            </label>
+                            {renderInput(childField, true)}
+                          </div>
+                        ))}
                       </div>
                     )}
-                    <div 
-                      className={cn(
-                        "space-y-1.5 p-5 rounded-[2rem] transition-all border-2",
-                        hoveredField === field 
-                          ? "bg-white shadow-2xl ring-8 ring-slate-100 scale-[1.03] border-slate-900" 
-                          : isEmpty
-                            ? "bg-slate-50/40 border-transparent opacity-60 hover:opacity-100 hover:bg-slate-100/50"
-                            : isTotal
-                              ? "bg-slate-900/5 border-transparent hover:bg-slate-100/50"
-                              : "bg-slate-50 border-transparent hover:bg-slate-100/50"
-                      )}
-                      onMouseEnter={() => setHoveredField(field as string)}
-                      onMouseLeave={() => setHoveredField(null)}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <span className={cn("w-5 h-5 rounded-full shadow-sm flex-shrink-0", FIELD_COLORS[field].border.replace('border-', 'bg-'))} />
-                          <label className={cn("text-sm font-black", isEmpty ? "text-slate-400" : isTotal ? "text-slate-900" : "text-slate-700")}>
-                            {FIELD_NAMES[field] || field}
-                          </label>
-                        </div>
-                        {isEmpty && (
-                          <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">فارغ</span>
-                        )}
-                      </div>
-                      
-                      <div className="relative">
-                        {field === 'itemsDescription' ? (
-                          <textarea 
-                            value={String(editData[field] || '')}
-                            onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
-                            className={cn(
-                              "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-lg font-black focus:border-slate-900 transition-all min-h-[160px] leading-relaxed shadow-sm",
-                              hoveredField === field && "border-slate-900"
-                            )}
-                            style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field].highlight : undefined }}
-                          />
-                        ) : (
-                          <input 
-                            type="text" 
-                            value={String(editData[field] || '')}
-                            onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
-                            className={cn(
-                              "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-xl font-black focus:border-slate-900 transition-all shadow-sm",
-                              hoveredField === field && "border-slate-900"
-                            )}
-                            style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field].highlight : undefined }}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  </React.Fragment>
+                  </div>
                 );
               });
+
+              return elements;
             })()}
           </div>
 
