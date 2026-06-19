@@ -825,7 +825,7 @@ export default function Dashboard() {
     for (const field of fieldsToLearn) {
       const oldVal = (selectedInvoice as any)[field];
       const newVal = (editData as any)[field];
-      if (newVal && newVal !== oldVal && newVal !== '#######') {
+      if (newVal && newVal !== oldVal) {
         const existing = await getAllKnowledge();
         const examples = existing[field] || [];
         if (!examples.includes(newVal)) {

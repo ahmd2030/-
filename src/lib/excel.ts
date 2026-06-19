@@ -35,7 +35,8 @@ export async function readExcelTemplate(file: File): Promise<ExcelTemplateData> 
 }
 
 export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateData) {
-  const placeholder = '#######';
+  const textPlaceholder = '';
+  const numPlaceholder = 0;
   
   // Default headers exactly as the user's Excel schema
   const defaultHeaders = [
@@ -86,41 +87,44 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
         ? Object.keys(previousRows[0] || {}).find(k => k === deduplicatedHeaders[idx] || k.startsWith(h)) || deduplicatedHeaders[idx]
         : deduplicatedHeaders[idx];
 
+      const cleanText = (val: any) => (val === '#######' || val === undefined || val === null || val === '') ? textPlaceholder : val;
+      const cleanNum = (val: any) => (val === '#######' || val === undefined || val === null || val === '') ? numPlaceholder : val;
+
       if (h === 'م') row[dedupKey] = nextId + index;
-      else if (h === 'التاريخ 1' || h === 'التاريخ' || h.toLowerCase().includes('date')) row[dedupKey] = item.date || placeholder;
-      else if (h === 'رقم الفاتورة' || h.toLowerCase().includes('invoice')) row[dedupKey] = item.invoiceNumber || placeholder;
-      else if (h === 'اللوحة' || h.includes('plate')) row[dedupKey] = item.plateNumber || placeholder;
-      else if (h === 'العداد' || h === 'العدد' || h.includes('count')) row[dedupKey] = item.count || '';
-      else if (h === 'نوع السيارة' || h.includes('car')) row[dedupKey] = item.carType || placeholder;
-      else if (h === 'الفرع' || h.includes('branch')) row[dedupKey] = item.branch || placeholder;
-      else if (h === 'الاجمالي' || h === 'الإجمالي' || h === 'subtotal') row[dedupKey] = item.subTotal || placeholder;
-      else if (h === 'الضريبة' || h.includes('tax')) row[dedupKey] = item.taxAmount || placeholder;
-      else if (h === 'الي بعد الض' || h === 'الاجمالي بعد الضريبة' || h === 'total') row[dedupKey] = item.totalAmount || placeholder;
+      else if (h === 'التاريخ 1' || h === 'التاريخ' || h.toLowerCase().includes('date')) row[dedupKey] = cleanText(item.date);
+      else if (h === 'رقم الفاتورة' || h.toLowerCase().includes('invoice')) row[dedupKey] = cleanText(item.invoiceNumber);
+      else if (h === 'اللوحة' || h.includes('plate')) row[dedupKey] = cleanText(item.plateNumber);
+      else if (h === 'العداد' || h === 'العدد' || h.includes('count')) row[dedupKey] = cleanText(item.count);
+      else if (h === 'نوع السيارة' || h.includes('car')) row[dedupKey] = cleanText(item.carType);
+      else if (h === 'الفرع' || h.includes('branch')) row[dedupKey] = cleanText(item.branch);
+      else if (h === 'الاجمالي' || h === 'الإجمالي' || h === 'subtotal') row[dedupKey] = cleanNum(item.subTotal);
+      else if (h === 'الضريبة' || h.includes('tax')) row[dedupKey] = cleanNum(item.taxAmount);
+      else if (h === 'الي بعد الض' || h === 'الاجمالي بعد الضريبة' || h === 'total') row[dedupKey] = cleanNum(item.totalAmount);
       else if (h === 'ملاحظات' || h.includes('note')) row[dedupKey] = ''; 
       
       // Categories
-      else if (h === 'زيت') { currentCategory = 'oil'; row[dedupKey] = item.oilName || placeholder; }
-      else if (h === 'فلتر زيت') { currentCategory = 'oilFilter'; row[dedupKey] = item.oilFilterName || placeholder; }
-      else if (h === 'زيت جير') { currentCategory = 'gearOil'; row[dedupKey] = item.gearOilName || placeholder; }
-      else if (h === 'زيت دفرنس') { currentCategory = 'diffOil'; row[dedupKey] = item.diffOilName || placeholder; }
-      else if (h === 'فلتر هواء') { currentCategory = 'airFilter'; row[dedupKey] = item.airFilterName || placeholder; }
-      else if (h === 'فلتر مكيف') { currentCategory = 'acFilter'; row[dedupKey] = item.acFilterName || placeholder; }
-      else if (h === 'فلتر ديزل') { currentCategory = 'dieselFilter'; row[dedupKey] = item.dieselFilterName || placeholder; }
-      else if (h === 'خدمة غيار فلتر ديزل') { currentCategory = 'dieselFilterService'; row[dedupKey] = item.dieselFilterServiceName || placeholder; }
-      else if (h === 'كفرات') { currentCategory = 'tires'; row[dedupKey] = item.tiresName || placeholder; }
-      else if (h === 'مساحة' || h === 'مساحات') { currentCategory = 'wipers'; row[dedupKey] = item.wipersName || placeholder; }
-      else if (h === 'بطاريات') { currentCategory = 'batteries'; row[dedupKey] = item.batteriesName || placeholder; }
-      else if (h === 'خدمات') { currentCategory = 'services'; row[dedupKey] = item.servicesName || placeholder; }
-      else if (h === 'قطع غيار') { currentCategory = 'spareParts'; row[dedupKey] = item.sparePartsName || placeholder; }
+      else if (h === 'زيت') { currentCategory = 'oil'; row[dedupKey] = cleanText(item.oilName); }
+      else if (h === 'فلتر زيت') { currentCategory = 'oilFilter'; row[dedupKey] = cleanText(item.oilFilterName); }
+      else if (h === 'زيت جير') { currentCategory = 'gearOil'; row[dedupKey] = cleanText(item.gearOilName); }
+      else if (h === 'زيت دفرنس') { currentCategory = 'diffOil'; row[dedupKey] = cleanText(item.diffOilName); }
+      else if (h === 'فلتر هواء') { currentCategory = 'airFilter'; row[dedupKey] = cleanText(item.airFilterName); }
+      else if (h === 'فلتر مكيف') { currentCategory = 'acFilter'; row[dedupKey] = cleanText(item.acFilterName); }
+      else if (h === 'فلتر ديزل') { currentCategory = 'dieselFilter'; row[dedupKey] = cleanText(item.dieselFilterName); }
+      else if (h === 'خدمة غيار فلتر ديزل') { currentCategory = 'dieselFilterService'; row[dedupKey] = cleanText(item.dieselFilterServiceName); }
+      else if (h === 'كفرات') { currentCategory = 'tires'; row[dedupKey] = cleanText(item.tiresName); }
+      else if (h === 'مساحة' || h === 'مساحات') { currentCategory = 'wipers'; row[dedupKey] = cleanText(item.wipersName); }
+      else if (h === 'بطاريات') { currentCategory = 'batteries'; row[dedupKey] = cleanText(item.batteriesName); }
+      else if (h === 'خدمات') { currentCategory = 'services'; row[dedupKey] = cleanText(item.servicesName); }
+      else if (h === 'قطع غيار') { currentCategory = 'spareParts'; row[dedupKey] = cleanText(item.sparePartsName); }
       
       // Qty and Price mapping based on currentCategory context
       else if (h === 'الكمية' && currentCategory) {
-        row[dedupKey] = (item as any)[`${currentCategory}Qty`] || placeholder;
+        row[dedupKey] = cleanNum((item as any)[`${currentCategory}Qty`]);
       }
       else if (h === 'السعر' && currentCategory) {
-        row[dedupKey] = (item as any)[`${currentCategory}Price`] || placeholder;
+        row[dedupKey] = cleanNum((item as any)[`${currentCategory}Price`]);
       }
-      else row[dedupKey] = (item as any)[h] || placeholder;
+      else row[dedupKey] = cleanText((item as any)[h]);
     });
     
     // To handle JS Object keys deduplication if `template` isn't used, 
@@ -140,7 +144,7 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
     // Try to find a match in existing rows
     const matchIndex = combinedRows.findIndex(oldRow => {
       const oldInvoice = String(oldRow['رقم الفاتورة'] || oldRow['invoice'] || '').trim();
-      return oldInvoice !== '' && oldInvoice === newInvoice && newInvoice !== placeholder;
+      return oldInvoice !== '' && oldInvoice === newInvoice && newInvoice !== textPlaceholder;
     });
 
     if (matchIndex >= 0) {
@@ -212,8 +216,8 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
           cell.s.fill = { fgColor: { rgb: "F8FAFC" } };
         }
         
-        // Highlight placeholder if present
-        if (cell.v === placeholder) {
+        // Highlight empty text or zero if present
+        if (cell.v === '' || cell.v === 0) {
           cell.s.font.color = { rgb: "94A3B8" }; // Slate-400
         }
       }
