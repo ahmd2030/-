@@ -283,54 +283,106 @@ export default function InvoicePreviewModal({
               </div>
             )}
 
-            {/* Field Inputs */}
-            {(Object.keys(FIELD_COLORS) as Array<keyof typeof FIELD_COLORS>).map(field => (
-              <div 
-                key={field} 
-                className={cn(
-                  "space-y-1.5 p-5 rounded-[2rem] transition-all border-2",
-                  hoveredField === field 
-                    ? "bg-white shadow-2xl ring-8 ring-slate-100 scale-[1.03] border-slate-900" 
-                    : "bg-slate-50 border-transparent hover:bg-slate-100/50"
-                )}
-                onMouseEnter={() => setHoveredField(field as string)}
-                onMouseLeave={() => setHoveredField(null)}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <span className={cn("w-5 h-5 rounded-full shadow-sm flex-shrink-0", FIELD_COLORS[field].border.replace('border-', 'bg-'))} />
-                    <label className="text-sm font-black text-slate-700">
-                      {FIELD_NAMES[field] || field}
-                    </label>
-                  </div>
-                </div>
-                
-                <div className="relative">
-                  {field === 'itemsDescription' ? (
-                    <textarea 
-                      value={String(editData[field] || '')}
-                      onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
+            {/* Field Inputs - sorted: filled first, empty after, totals at bottom */}
+            {(() => {
+              const allFields = Object.keys(FIELD_COLORS) as Array<keyof typeof FIELD_COLORS>;
+              
+              // Define total/financial summary fields that always go last
+              const totalFields = new Set(['subTotal', 'taxAmount', 'totalAmount']);
+              
+              // Check if a field has meaningful data
+              const hasData = (field: string) => {
+                const val = String(editData[field] || '');
+                return val !== '' && val !== '0' && val !== 'null' && val !== '#######';
+              };
+
+              // Sort: filled non-total → empty non-total → totals
+              const sorted = [...allFields].sort((a, b) => {
+                const aIsTotal = totalFields.has(a as string);
+                const bIsTotal = totalFields.has(b as string);
+                if (aIsTotal && !bIsTotal) return 1;
+                if (!aIsTotal && bIsTotal) return -1;
+                const aHas = hasData(a as string);
+                const bHas = hasData(b as string);
+                if (aHas && !bHas) return -1;
+                if (!aHas && bHas) return 1;
+                return 0;
+              });
+
+              return sorted.map((field, idx) => {
+                const isEmpty = !hasData(field as string) && !totalFields.has(field as string);
+                const isTotal = totalFields.has(field as string);
+                const showDivider = idx > 0 && (
+                  (isEmpty && hasData(sorted[idx - 1] as string) && !totalFields.has(sorted[idx - 1] as string)) ||
+                  (isTotal && !totalFields.has(sorted[idx - 1] as string))
+                );
+
+                return (
+                  <React.Fragment key={field}>
+                    {showDivider && (
+                      <div className="flex items-center gap-3 my-2">
+                        <div className="flex-1 h-px bg-slate-200" />
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          {isTotal ? '🧾 الإجماليات' : '⬇ حقول فارغة'}
+                        </span>
+                        <div className="flex-1 h-px bg-slate-200" />
+                      </div>
+                    )}
+                    <div 
                       className={cn(
-                        "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-lg font-black focus:border-slate-900 transition-all min-h-[160px] leading-relaxed shadow-sm",
-                        hoveredField === field && "border-slate-900"
+                        "space-y-1.5 p-5 rounded-[2rem] transition-all border-2",
+                        hoveredField === field 
+                          ? "bg-white shadow-2xl ring-8 ring-slate-100 scale-[1.03] border-slate-900" 
+                          : isEmpty
+                            ? "bg-slate-50/40 border-transparent opacity-60 hover:opacity-100 hover:bg-slate-100/50"
+                            : isTotal
+                              ? "bg-slate-900/5 border-transparent hover:bg-slate-100/50"
+                              : "bg-slate-50 border-transparent hover:bg-slate-100/50"
                       )}
-                      style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field].highlight : undefined }}
-                    />
-                  ) : (
-                    <input 
-                      type="text" 
-                      value={String(editData[field] || '')}
-                      onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
-                      className={cn(
-                        "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-xl font-black focus:border-slate-900 transition-all shadow-sm",
-                        hoveredField === field && "border-slate-900"
-                      )}
-                      style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field].highlight : undefined }}
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
+                      onMouseEnter={() => setHoveredField(field as string)}
+                      onMouseLeave={() => setHoveredField(null)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <span className={cn("w-5 h-5 rounded-full shadow-sm flex-shrink-0", FIELD_COLORS[field].border.replace('border-', 'bg-'))} />
+                          <label className={cn("text-sm font-black", isEmpty ? "text-slate-400" : isTotal ? "text-slate-900" : "text-slate-700")}>
+                            {FIELD_NAMES[field] || field}
+                          </label>
+                        </div>
+                        {isEmpty && (
+                          <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">فارغ</span>
+                        )}
+                      </div>
+                      
+                      <div className="relative">
+                        {field === 'itemsDescription' ? (
+                          <textarea 
+                            value={String(editData[field] || '')}
+                            onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
+                            className={cn(
+                              "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-lg font-black focus:border-slate-900 transition-all min-h-[160px] leading-relaxed shadow-sm",
+                              hoveredField === field && "border-slate-900"
+                            )}
+                            style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field].highlight : undefined }}
+                          />
+                        ) : (
+                          <input 
+                            type="text" 
+                            value={String(editData[field] || '')}
+                            onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
+                            className={cn(
+                              "w-full p-5 bg-white border-2 border-slate-200/60 rounded-3xl text-xl font-black focus:border-slate-900 transition-all shadow-sm",
+                              hoveredField === field && "border-slate-900"
+                            )}
+                            style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field].highlight : undefined }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </React.Fragment>
+                );
+              });
+            })()}
           </div>
 
           {/* Action Footer */}
