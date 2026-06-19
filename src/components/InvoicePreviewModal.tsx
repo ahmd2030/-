@@ -296,25 +296,35 @@ export default function InvoicePreviewModal({
                 return val !== '' && val !== '0' && val !== 'null' && val !== '#######';
               };
 
-              // Sort: filled non-total → empty non-total → totals
+              // Sort: filled non-total → totals → empty
               const sorted = [...allFields].sort((a, b) => {
                 const aIsTotal = totalFields.has(a as string);
                 const bIsTotal = totalFields.has(b as string);
-                if (aIsTotal && !bIsTotal) return 1;
-                if (!aIsTotal && bIsTotal) return -1;
                 const aHas = hasData(a as string);
                 const bHas = hasData(b as string);
-                if (aHas && !bHas) return -1;
-                if (!aHas && bHas) return 1;
+                const aIsEmpty = !aHas && !aIsTotal;
+                const bIsEmpty = !bHas && !bIsTotal;
+                
+                // Empty always last
+                if (aIsEmpty && !bIsEmpty) return 1;
+                if (!aIsEmpty && bIsEmpty) return -1;
+                // Totals before empty, after filled
+                if (aIsTotal && bHas && !bIsTotal) return 1;
+                if (!aIsTotal && bIsTotal && aHas) return -1;
                 return 0;
               });
 
               return sorted.map((field, idx) => {
                 const isEmpty = !hasData(field as string) && !totalFields.has(field as string);
                 const isTotal = totalFields.has(field as string);
+                const prevField = idx > 0 ? sorted[idx - 1] : null;
+                const prevIsTotal = prevField ? totalFields.has(prevField as string) : false;
+                const prevHasData = prevField ? hasData(prevField as string) : false;
+                const prevIsEmpty = prevField ? (!prevHasData && !prevIsTotal) : false;
+                
                 const showDivider = idx > 0 && (
-                  (isEmpty && hasData(sorted[idx - 1] as string) && !totalFields.has(sorted[idx - 1] as string)) ||
-                  (isTotal && !totalFields.has(sorted[idx - 1] as string))
+                  (isTotal && !prevIsTotal && !prevIsEmpty) ||   // before totals section
+                  (isEmpty && !prevIsEmpty)                       // before empty section
                 );
 
                 return (
