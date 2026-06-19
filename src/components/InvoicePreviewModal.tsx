@@ -350,8 +350,8 @@ export default function InvoicePreviewModal({
                   value={String(editData[field] || '')}
                   onChange={(e) => onEdit({ ...editData, [field]: e.target.value })}
                   className={cn(
-                    "w-full bg-white border-2 border-slate-200/60 rounded-2xl font-black focus:border-slate-900 transition-all shadow-sm",
-                    compact ? "p-3 text-sm" : "p-4 text-base",
+                    "w-full bg-white border-2 border-slate-200/60 rounded-2xl font-bold focus:border-slate-900 transition-all shadow-sm",
+                    compact ? "p-3 text-base" : "p-4 text-lg",
                     hoveredField === field && "border-slate-900"
                   )}
                   style={{ backgroundColor: hoveredField === field ? FIELD_COLORS[field]?.highlight : undefined }}
