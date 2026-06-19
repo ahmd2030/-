@@ -18,6 +18,12 @@ export interface InvoiceData {
   oilFilterName: string;
   oilFilterQty: string;
   oilFilterPrice: string;
+  gearOilName: string;
+  gearOilQty: string;
+  gearOilPrice: string;
+  diffOilName: string;
+  diffOilQty: string;
+  diffOilPrice: string;
   airFilterName: string;
   airFilterQty: string;
   airFilterPrice: string;
@@ -27,6 +33,9 @@ export interface InvoiceData {
   dieselFilterName: string;
   dieselFilterQty: string;
   dieselFilterPrice: string;
+  dieselFilterServiceName: string;
+  dieselFilterServiceQty: string;
+  dieselFilterServicePrice: string;
   tiresName: string;
   tiresQty: string;
   tiresPrice: string;
@@ -156,6 +165,12 @@ export const FIELD_NAMES: Record<string, string> = {
   oilFilterName: 'فلتر زيت',
   oilFilterQty: 'كمية فلتر الزيت',
   oilFilterPrice: 'سعر فلتر الزيت',
+  gearOilName: 'زيت جير',
+  gearOilQty: 'كمية زيت الجير',
+  gearOilPrice: 'سعر زيت الجير',
+  diffOilName: 'زيت دفرنس',
+  diffOilQty: 'كمية زيت الدفرنس',
+  diffOilPrice: 'سعر زيت الدفرنس',
   airFilterName: 'فلتر هواء',
   airFilterQty: 'كمية فلتر الهواء',
   airFilterPrice: 'سعر فلتر الهواء',
@@ -165,6 +180,9 @@ export const FIELD_NAMES: Record<string, string> = {
   dieselFilterName: 'فلتر ديزل',
   dieselFilterQty: 'كمية فلتر الديزل',
   dieselFilterPrice: 'سعر فلتر الديزل',
+  dieselFilterServiceName: 'خدمة غيار فلتر ديزل',
+  dieselFilterServiceQty: 'كمية خدمة فلتر الديزل',
+  dieselFilterServicePrice: 'سعر خدمة فلتر الديزل',
   tiresName: 'كفرات',
   tiresQty: 'كمية الكفرات',
   tiresPrice: 'سعر الكفرات',
