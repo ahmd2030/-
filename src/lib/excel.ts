@@ -87,8 +87,8 @@ export function exportToExcel(newData: InvoiceData[], template?: ExcelTemplateDa
         ? Object.keys(previousRows[0] || {}).find(k => k === deduplicatedHeaders[idx] || k.startsWith(h)) || deduplicatedHeaders[idx]
         : deduplicatedHeaders[idx];
 
-      const cleanText = (val: any) => (val === '#######' || val === undefined || val === null || val === '') ? textPlaceholder : val;
-      const cleanNum = (val: any) => (val === '#######' || val === undefined || val === null || val === '') ? numPlaceholder : val;
+      const cleanText = (val: any) => (val === '#######' || val === undefined || val === null || val === '' || String(val).toLowerCase() === 'null') ? textPlaceholder : val;
+      const cleanNum = (val: any) => (val === '#######' || val === undefined || val === null || val === '' || String(val).toLowerCase() === 'null') ? numPlaceholder : Number(val) || numPlaceholder;
 
       if (h === 'م') row[dedupKey] = nextId + index;
       else if (h === 'التاريخ 1' || h === 'التاريخ' || h.toLowerCase().includes('date')) row[dedupKey] = cleanText(item.date);
